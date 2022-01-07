@@ -1,6 +1,23 @@
 
 # Simulating predictive value of traits
 
+# maybe we need I need a bit more reading
+
+# 1. simple model showing that the way we sample can strongly affect our quantification of CWM and FD
+# 2. more complex model of using traits to estimate, e.g. photosynthesis, and then biomass
+
+# how to do this... 
+
+# maybe we can also check how intraspecific variation affects different aspects of the trait distribution
+# e.g.: CWM, FD, kurtosis and skew
+
+# different types of sampling?
+
+# intraspecific traits may not be a random sample from the regional pool?
+
+# are intraspecific traits within communities a random sample?
+# are they selected to maximise variation within or between species?
+
 # load relevant libraries
 library(mobsim)
 library(dplyr)
@@ -10,14 +27,12 @@ sp_n <- 10
 
 # get sp_n mean values for the trait distributions of each species
 sp_u <- rnorm(n = sp_n, 100, 30)
-sp_u
 
 # get sp_n sd values for the trait distributions of each species
 sp_sd <- runif(sp_n, 0, 10)
-sp_sd
 
 # simulate a local abundance distrbution
-reps <- 2
+reps <- 10
 sim_divs <- rep(2:sp_n, each = reps)
 
 x <- vector("list", length = length(sim_divs))
@@ -34,6 +49,9 @@ for (i in 1:length(sim_divs) ) {
   x[[i]] <- y
 
 }
+
+x
+
 
 y <- 
   lapply(x, function(a) {
