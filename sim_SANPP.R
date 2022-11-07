@@ -26,12 +26,19 @@
 #' uncertainty and uncertainty in the actual SANPP measurements, what the theoretical
 #' limits to predicting SANPP from plant traits is.
 #' 
+#' notes:
+#' 1. seems that one major part of the bad correlation is when the correlation
+#' between species' pi and the relative growth rate is low
+#' 
+#' 2. but definitely not only that... the differences in growing season length
+#' are also super important it seems
+#' 
 
 # load relevant libraries
 library(dplyr)
 
 # communities
-com <- 5
+com <- 10
 
 # species number
 sp <- 5
@@ -53,8 +60,13 @@ RGR <- data.frame(sp = paste0("sp_", 1:length(RGR)),
 
 # draw tf and t0 values
 t0f <- lapply(1:sp, function(x) {
-  y <- runif(n = 2, min = 0, max = dt)
-  z <- sort(round(y, 0))
+  ymin <- runif(n = 1, min = 0, max = dt/5 )
+  ymax <- runif(n = 1, min = (dt/5)*4, max = dt )
+  ymin <- 0
+  ymax <- dt
+  
+  z <- sort(round(c(ymin, ymax), 0))
+  print(z)
   
   df <- data.frame(sp = paste0("sp_", x))
   df$t0 <- z[1]
@@ -85,16 +97,31 @@ SANPP <- vector(length = nrow(prod.dat))
 for(i in 1:nrow(prod.dat)) {
     
     SANPP[i] <- with(prod.dat[i,],
-                     log10( sum( (pi*exp(RGR*(tf-t0))) ) )/dt )
+                      (pi*exp(RGR*(tf-t0))) )
     
   }
 
 # add SANPP to the dataset
 prod.dat$SANPP <- SANPP
-      
 
+# summarise to the community-level
+prod.sum <- 
+  prod.dat %>%
+  group_by(com) %>%
+  summarise(CWM_RGR = sum(pi*RGR),
+            SANPP = log10(sum(SANPP))/dt )
 
+# check whether community weighted mean of RGR predicts SANPP
+plot(prod.sum$CWM_RGR, prod.sum$SANPP)
+cor.test(prod.sum$CWM_RGR, prod.sum$SANPP)
 
+# check if species with high RGR are dominating
+cor(prod.dat$RGR, prod.dat$pi)
+prod.dat %>%
+  group_by(com) %>%
+  summarise(cor1 = cor(pi, RGR)) %>%
+  pull(cor1) %>%
+  mean()
 
 
 
