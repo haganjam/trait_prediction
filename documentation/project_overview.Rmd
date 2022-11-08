@@ -1,0 +1,72 @@
+---
+title: "Predictive value of traits for ecosystem processes/functions"
+output: html_notebook
+---
+
+## Description of the project
+
+Several recent papers have suggested that the predictive value of functional traits for ecosystem processes/functions (function used hereafter) is relatively low (e.g. van der Plas et al. 2020). The basis for this claim usually comes from examining the coefficient of determination (r2) when attempting to predict an ecosystem function using a community-level trait (e.g. community weighted mean or functional diversity) using some sort of linear regression framework. In several cases, the r2 value is considered "low" by the authors (often around 0.20 or 0.30, at least for some traits). However, a question that has not been asked is: How much variation in an ecosystem function can we expect a community-level trait to reasonably explain? 
+
+Here, we aim to answer this question by showing that there are fundamental limits to the variation that a community-level trait can explain in community productivity, one of the most commonly studied ecosystem processes (van der Plas 2019). To do this, we use a model that derives plant productivity from growing season length, species' standing biomass, species growing phenology and species maximum relative growth rate (Garnier et al. 2004).
+
+## Methods
+
+Garnier et al. (2004, Ecology) proposed a causal model of specific aboveground net primary productivity (SANPP, g g-1 day-1). SANPP is defined as the net increase in aboveground biomass per unit time of a community standardised per gram of living biomass (Shipley et al. 2006, Ecology Letters). Their model writes SANPP as follows:
+
+SANPP = log10( sum(pij * exp(RGRi * (tf - t0)i ) ) )/dt
+
+where pij is the relative standing biomass of species i in community j, RGRi is the maximum relative growth rate of species i, t0 and tf are the start and finish of species i's growing period and dt is the time interval over which SANPP was measured. This model is thus able to causally derive SANPP at the community level through species' maximum relative growth rates (RGRi), phenologies (tf and t0)i and their standing relative biomasses.
+
+How does this model relate to the plant functional traits that are commonly measured in ecology? The expectation that community-level traits should predict ecosystem functioning is based on the assumption that commonly measured plant functional traits (e.g. SLA, leaf width etc.) are proxies for parameters like plant growth rates (Reich et al. 1992). In this model of SANPP, commonly measured plant functional traits would then be assumed to be correlated to species' RGRs which has been observed (Reich et al. 1992, Vile et al. 2006). 
+
+However, just like any complex ecosystem function or process, SANPP does not only depend on species' RGRs. As outlined in the model above, SANPP depends on individual relative abundances of species in a community (pij) and their phenology (tf and t0)i. These parameters may affect how well commonly measured plant functional traits can predict ecosystem functions. Moreover, the strength of the correlation between RGRs and traits like SLA will also affect predictions of ecosystem processes.
+
+We use Garnier et al.'s (2004) model of SANPP to examine the following to examine the expected predictive values of community-level traits for SANPP given uncertainty in the relationship between community-level traits and RGR and variation in species relative abundances and phenology. We do this by simulating communities. These communities vary in:
+
++ 1. Their evenness in the relative abundance of different species
++ 2. The correlation between plant traits (e.g. SLA) and relative growth rate
++ 3. Whether species have similar or different phenologies
++ 4. Whether species with high RGR dominate communities
+
+The graph below plots the r2 value of a linear regression between community-weighted SLA and SANPP (y-axis) as a function of the correlation between SLA and RGR (x-axis). All species had the same phenology and species with high trait values tended to dominate the community (i.e. high relative abundance) as is commonly assumed in models of community assembly (Shipley et al. 2006, Science). These are optimal conditions for explaining ecosystem functions using community-level trait values. 
+
+From this (see below), it's clear that unless species' SLA is highly correlated to their RGR values (r > 0.5), the predictive value of SLA for SANPP is relatively low. Different colours represent different levels of species evenness in relative abundance.
+
+```{r}
+ggplot(data = sim.out.df %>% filter(D == "dom", phen == "equal"),
+       mapping = aes(x = r, y = r2_SLA, colour = even)) +
+  geom_jitter(width = 0.015, alpha = 0.5, shape = 1) +
+  scale_colour_viridis_c(option = "C") +
+  geom_smooth(colour = "black", size = 0.5) +
+  ylab("r2: SANPP ~ CWM-SLA") +
+  xlab("r: RGR ~ SLA") +
+  theme_bw()
+```
+Below, we plot the same graph as previously but now species do not have the same phenology and species with high trait values do not necessarily dominate the community.
+
+The predictive value of SLA for SANPP (r2, y-axis) increases with the correlation between SLA and RGR as previously. But, overall, there is much more variation and the average level of variation explained is considerably lower. Different colours represent different levels of species evenness in relative abundance.
+
+This is probably a more realistic representation because it's highly unlikely that species have the same phenology and always dominate where their trait values are high.
+
+```{r}
+ggplot(data = sim.out.df %>% filter(D == "random", phen == "random"),
+       mapping = aes(x = r, r2_SLA, colour = even )) +
+  geom_jitter(width = 0.015, alpha = 0.5, shape = 1) +
+  scale_colour_viridis_c(option = "C") +
+  ylab("r2: SANPP ~ CWM-SLA") +
+  xlab("r: RGR ~ SLA") +
+  geom_smooth(colour = "black", size = 0.5) +
+  theme_classic()
+```
+
+Therefore, this model suggests that we shouldn't really expect community-level traits like the community weighted mean of SLA to predict ecosystem functions like SANPP very well. Traits like SLA are imperfect proxies for things like RGR and other factors like varying phenology and dominance also affect the expected explanatory power. 
+
+We chose to illustrate this point using a simple model using a single trait. But, for more complex traits and ecosystem functions, these results are still likely to hold.
+
+
+
+
+
+
+
+
