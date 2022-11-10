@@ -1,20 +1,21 @@
 
+# load relevant libraries
 library(dplyr)
 library(betapart)
 library(faux)
 
 # we can set even_mix = TRUE to see if this changes the results
 # otherwise we stick with communities that vary in their dominance
-sp = 10
-com = 20
+sp = 5
+com = 10
 even_par = 0.5
 even_mix = FALSE
 
 com_mat = NA # allow the user to add their own community matrix (sites are rows, species are columns)
 
 # parameters for the multivariate normal and the chosen correlation coefficient
-mu = c(10, 0.25)
-sd = c(4, 0.1)
+mu = c(10, 0.5)
+sd = c(4, 0.2)
 r = 0.5
 
 # phenology
@@ -114,24 +115,17 @@ prod.dat <- left_join(left_join(RA, t0f, by = "sp"),
                       by = "sp")
 
 # calculate SANPP
-SANPP <- vector(length = nrow(prod.dat))
-for(i in 1:nrow(prod.dat)) {
+prod.dat$SANPP<- with(prod.dat,
+                      (pi*exp(RGR*(tf-t0))) )
   
-  SANPP[i] <- with(prod.dat[i,],
-                   (pi*exp(RGR*(tf-t0))) )
-  
-}
-
-# add SANPP to the dataset
-prod.dat$SANPP <- SANPP                      
-
 # summarise to the community-level
 prod.sum <- 
   prod.dat %>%
   group_by(com) %>%
-  summarise(CWM_SLA = sum(pi*SLA),
+  summarise(cor_dom = cor(RGR, pi),
+            CWM_SLA = sum(pi*SLA),
             CWM_RGR = sum(pi*RGR),
-            SANPP = log10(sum(SANPP))/dt )
+            SANPP = (log(sum(SANPP))/dt)*1000 )
 
 # fit a linear model to get the RGR r2 value
 lm.x <- lm(SANPP ~ CWM_RGR, data = prod.sum)
@@ -144,11 +138,17 @@ lm.y <- summary(lm.y)
 r2_SLA <- lm.y$r.squared
 
 # pull this into a data.frame
-df.out <- data.frame(pheno_over = 1 - round(pheno_over, 2),
+df.out <- data.frame(cor_dom = median(prod.sum$cor_dom),
+                     pheno_over = 1 - round(pheno_over, 2),
                      r2_SLA = round(r2_SLA, 3),
-                     r2_RGR = round(r2_RGR, 3) )
+                     r2_RGR = round(r2_RGR, 3),
+                     r_RGR = round(cor(prod.sum$CWM_RGR, prod.sum$SANPP), 3))
 
 print(df.out)
+
+
+plot(traits$RGR, )
+
 
 
 return(df.out)
