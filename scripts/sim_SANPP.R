@@ -71,13 +71,13 @@ sim_SANPP <- function(com = 20, sp = 10, even = 0.5, dt = 150,
                         r = r, 
                         varnames = c("SLA", "RGR"),
                         empirical = TRUE
-  )
+                        )
   
   # convert RGR to a data.frame
   traits <- data.frame(sp = paste0("sp_", 1:nrow(traits)),
                        RGR = traits$RGR,
                        SLA = traits$SLA
-  )
+                       )
   
   # modify abundances
   if (D == "cor") {
