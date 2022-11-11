@@ -11,6 +11,15 @@ com = 10
 even_par = 0.5
 even_mix = FALSE
 
+# generate a community matrix with only one species per community
+RA01 <- 
+  sapply(1:com, function(x) {
+  y <- rep(0, sp)
+  y[sample(1:length(y), 1)] <- 1
+  return(y)
+} ) %>%
+  t()
+
 com_mat = NA # allow the user to add their own community matrix (sites are rows, species are columns)
 
 # parameters for the multivariate normal and the chosen correlation coefficient
@@ -19,11 +28,11 @@ sd = c(4, 0.2)
 r = 0.5
 
 # phenology
-pheno = "random" 
+# pheno = "random" 
 pheno = "equal"
 
 # duration of measurements
-dt <- 150
+dt <- 100
 
 # simulate a relative abundance distribution
 if (is.matrix(com_mat)) {

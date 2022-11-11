@@ -63,6 +63,53 @@ Therefore, this model suggests that we shouldn't really expect community-level t
 
 We chose to illustrate this point using a simple model using a single trait. But, for more complex traits and ecosystem functions, these results are still likely to hold.
 
+## Additional notes
+
+There are conditions that we can derive mathematically where the community weighted mean of RGR should be perfectly correlated with SANPP. However, with this model, these conditions are rather limited.
+
+From doing simulations and trying to do the mathematics, I have derived the following conditions.
+
+1. When there is only one species in each community, then the community weighted mean of RGR will be perfectly correlated with SANPP.
+
+We can prove this mathematically as follows:
+
+
+2. When multiple species are present in a community, the community weighted mean of RGR is calculated as the sum(pi x RGR). In contrast, the SANPP is calculated as as log( sum(pi x exp(RGR x (tf-t0)) ) )/dt. Therefore, rather than multiplying the proportion by the RGR, we multiply it by the exponential of the RGR scaled by the phenological period. Thus, the longer the phenological period is, the greater weight is put on the trait value (RGR) relative to the relative abundance (pi). The consequence of this is that the highest productivity individual species will often be the species with high RGR with a long phenological period rather than the species with the highest relative abundance (pi). In contrast, with a community weighted mean, the relative proportion has a much stronger influence so the community weighted mean generally matches the species' trait value.
+
+This is difficult to prove mathematically but it explains several key observations from the simulations.
+
++ 1. When the phenological period is very limited (i.e. tf-to is 1 or 2), then the community weighted mean of RGR will be almost perfectly correlated with SANPP. This occurs because then the species that dominates production is very similar to the species that contributes most to the community weighted mean.
+
++ 2. When there is a perfect rank correlation between species' dominance and RGR, we also get the community weighted mean of RGR to be almost perfectly correlated with SANPP. This is because then species trait values are contributing in similar ways in the community weighted mean and the SANPP.
+
+
+## Implications
+
+From this modelling exercise, it seems clear that species can have a strong influence on SANPP in a patch in several different ways:
+
++ 1. Low relative abundance species can have very high RGRs and a long growing season.
+
++ 2. High relative abundance species can have very low RGRs and a long growing season.
+
++ 3. High relative abundance species can have very high RGRs and a short growing season
+
++ 4. High relative abundance species can have very high RGRs and a long growing season (i.e. the Darwinian demon)
+
+The problem with trying to predict SANPP using simply the community weighted RGR is that it cannot distinguish between all these different potential conditions. Rather, it simply assumes that SANPP is determined by the most abundant RGR value in the community rather than accounting for phenology and how this can influence which species contribute strongly to SANPP.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
