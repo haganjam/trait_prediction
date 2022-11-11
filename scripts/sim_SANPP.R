@@ -1,4 +1,4 @@
-
+#'
 #' @title: Theoretical limits to the correlation between plant traits and productivity
 #' 
 #' @description: Here, we use the model of primary productivity based on relative growth
@@ -25,13 +25,6 @@
 #' We then can ask if there is uncertainty in that prediction along with phenological
 #' uncertainty and uncertainty in the actual SANPP measurements, what the theoretical
 #' limits to predicting SANPP from plant traits is.
-#' 
-#' notes:
-#' 1. seems that one major part of the bad correlation is when the correlation
-#' between species' pi and the relative growth rate is low
-#' 
-#' 2. but definitely not only that... the differences in growing season length
-#' are also super important it seems
 #' 
 #' @function - sim_SANPP()
 #' @param com - number of communities to simulate

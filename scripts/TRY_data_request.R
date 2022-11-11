@@ -1,3 +1,9 @@
+#'
+#' @title: Theoretical limits to the correlation between plant traits and productivity
+#' 
+#' @description: Here, we match the species names from Vile et al. (2006, Ecology Letters)
+#' to names in the TRY database so that we can efficiently request the data.
+#' 
 
 # load relevant libraries
 library(readr)
@@ -6,6 +12,7 @@ library(here)
 
 # load the species names from Vile et al. 2006
 vile_sp <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_RGR.csv"))
+unique(vile_sp)
 
 # load the try species list
 try_sp <- read_tsv(here("data/TRY_species_list.txt"))
