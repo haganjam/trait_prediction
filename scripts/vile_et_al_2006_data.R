@@ -52,7 +52,36 @@ vile_ra <-
   arrange(field_age, Species)
 
 # how many species are there?
-unique(vile_ra$Species)
+un_sp <- unique(vile_ra$Species)
+
+# fill in missing species
+vile_ra <- 
+  lapply(split(vile_ra, vile_ra$id), function(y) {
+  
+  df <- 
+    tibble(id = y$id[1],
+           Species = un_sp[!(un_sp %in% y$Species)],
+           field_age = y$field_age[1],
+           live_biomass = 0)
+  
+  df <- 
+    bind_rows(df, y) %>%
+    arrange(Species)
+  
+  return(df)
+  
+} )
+
+vile_ra <- bind_rows(vile_ra)
+
+# convert to relative biomass
+vile_ra <- 
+  vile_ra %>%
+  group_by(id) %>%
+  mutate(sum_biomass = sum(live_biomass)) %>%
+  ungroup() %>%
+  mutate(live_biomass = live_biomass/sum_biomass) %>%
+  select(-sum_biomass)
 
 # load the SANPP data
 vile_SANPP <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_SANPP.csv"))
@@ -62,10 +91,25 @@ head(vile_SANPP)
 vile_SANPP <- bind_cols(tibble(id = 1:nrow(vile_SANPP)), vile_SANPP)
 head(vile_SANPP)
 
-# reduce the number of species to the two most dominant per field
+# join these data
+vile_dat <- 
+  left_join(vile_ra, 
+             select(vile_rgr, Species, RGRmax), 
+             by = "Species"
+             )
 
+vile_dat <- full_join(vile_dat, vile_SANPP, by = "id")
 
+# make a list to fit the productivity model
+d <- 
+  list(S = as.integer(as.factor(vile_dat$Species)),
+       RGR = vile_dat$RGRmax,
+       pi = vile_dat$live_biomass,
+       NPP = vile_dat$SANPP/1000)
 
+# write this as a proper stan model...
 
+# useful looking thread: https://discourse.mc-stan.org/t/finite-mixture-model-where-the-sum-of-a-groups-characteristics-is-known/20146
+# https://discourse.mc-stan.org/t/sum-vector-by-groups-month-year/5588/5
 
 
