@@ -45,5 +45,6 @@ vignettes/*.pdf
 # Data
 *.csv
 *.txt
+*.rds
 
 

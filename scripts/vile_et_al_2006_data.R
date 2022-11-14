@@ -100,6 +100,14 @@ vile_dat <-
 
 vile_dat <- full_join(vile_dat, vile_SANPP, by = "id")
 
+# can we get realistic SANPP data from the RGR values?
+vile_dat %>%
+  group_by(id) %>%
+  summarise(SANPP_est = log10(sum( live_biomass*exp(RGRmax*6) ))/90,
+            SANPP = median(SANPP)/1000)
+
+
+
 # make a list to fit the productivity model
 d <- 
   list(S = as.integer(as.factor(vile_dat$Species)),
@@ -109,7 +117,8 @@ d <-
 
 # write this as a proper stan model...
 
-# useful looking thread: https://discourse.mc-stan.org/t/finite-mixture-model-where-the-sum-of-a-groups-characteristics-is-known/20146
+# useful looking thread: 
+# https://discourse.mc-stan.org/t/finite-mixture-model-where-the-sum-of-a-groups-characteristics-is-known/20146
 # https://discourse.mc-stan.org/t/sum-vector-by-groups-month-year/5588/5
 
 
