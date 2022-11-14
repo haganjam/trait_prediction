@@ -6,9 +6,9 @@ library(faux)
 
 # we can set even_mix = TRUE to see if this changes the results
 # otherwise we stick with communities that vary in their dominance
-sp = 5
-com = 10
-even_par = 0.5
+sp = 26
+com = 12
+even_par = 0.1
 even_mix = FALSE
 
 # generate a community matrix with only one species per community
@@ -23,8 +23,8 @@ RA01 <-
 com_mat = NA # allow the user to add their own community matrix (sites are rows, species are columns)
 
 # parameters for the multivariate normal and the chosen correlation coefficient
-mu = c(10, 0.5)
-sd = c(4, 0.2)
+mu = c(10, 0.03)
+sd = c(4, 0.01)
 r = 0.5
 
 # phenology
@@ -32,7 +32,7 @@ r = 0.5
 pheno = "equal"
 
 # duration of measurements
-dt <- 100
+dt <- 30
 
 # simulate a relative abundance distribution
 if (is.matrix(com_mat)) {
@@ -134,7 +134,7 @@ prod.sum <-
   summarise(cor_dom = cor(RGR, pi),
             CWM_SLA = sum(pi*SLA),
             CWM_RGR = sum(pi*RGR),
-            SANPP = (log(sum(SANPP))/dt)*1000 )
+            SANPP = (log10(sum(SANPP))/dt)*1000 )
 
 # fit a linear model to get the RGR r2 value
 lm.x <- lm(SANPP ~ CWM_RGR, data = prod.sum)
@@ -154,10 +154,6 @@ df.out <- data.frame(cor_dom = median(prod.sum$cor_dom),
                      r_RGR = round(cor(prod.sum$CWM_RGR, prod.sum$SANPP), 3))
 
 print(df.out)
-
-
-plot(traits$RGR, )
-
 
 
 return(df.out)
