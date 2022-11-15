@@ -182,10 +182,16 @@ sim_SP(com = 20, sp = 10, even_par = 0.25, even_mix = FALSE, com_mat = RA01,
 
 # run a set of simulations
 
+# load relevant libraries
+library(dplyr)
+library(betapart)
+library(faux)
+
 # set-up a data.frame for simulations
 sim.df <- 
   expand.grid(rep = 1:5, 
               pheno = c("equal", "random"),
+              dt = c(100),
               even_par = round(seq(0.1, 20, length.out = 5), 1),
               r = seq(0.05, 0.95, 0.10),
               bio_m = c(1000),
@@ -227,7 +233,7 @@ for(i in 1:nrow(sim.df)) {
               CWM_pheno = mean( pi*(tf-t0) ),
               CWM_SLA = sum(pi*SLA),
               CWM_RGR = sum(pi*RGR),
-              ANPP = (sum(ANPP)/dt) )
+              ANPP = (sum(ANPP)/df.x[["dt"]]) )
   
   # write to a list
   data.sum[[i]] <- prod.sum
@@ -273,9 +279,10 @@ sim.out.df <-
 sim.df2 <- 
   expand.grid(rep = 1:5, 
               pheno = c("equal"),
+              dt = 60,
               even_par = round(seq(0.1, 20, length.out = 5), 1),
               r = 0.99,
-              bio_m = c(500) ) %>%
+              bio_m = c(100) ) %>%
   arrange(rep) %>%
   as_tibble()
 dim(sim.df2)
@@ -301,7 +308,7 @@ for(i in 1:nrow(sim.df2)) {
     sim_SP(com = 20, sp = 10, even_par = df.x[["even_par"]], even_mix = FALSE, com_mat = RA01, 
            mu = c(100, 0.5), sd = c(40, 0.2), r = df.x[["r"]],
            bio_m = NA, bio_sd = NA,
-           dt = 60, pheno = df.x[["pheno"]])
+           dt = df.x[["dt"]], pheno = df.x[["pheno"]])
   
   # calculate SANPP
   prod.dat$ANPP<- with(prod.dat,
@@ -316,7 +323,7 @@ for(i in 1:nrow(sim.df2)) {
               CWM_pheno = mean( pi*(tf-t0) ),
               CWM_SLA = sum(pi*SLA),
               CWM_RGR = sum(pi*RGR),
-              ANPP = (sum(ANPP)/dt) )
+              ANPP = (sum(ANPP)/df.x[["dt"]]) )
   
   # fit a linear model to get the RGR r2 value
   lm.x <- lm(ANPP ~ CWM_RGR, data = prod.sum)
