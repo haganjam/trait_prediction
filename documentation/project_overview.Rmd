@@ -11,22 +11,23 @@ Here, we aim to answer this question by showing that there are fundamental limit
 
 ## Methods
 
-Garnier et al. (2004, Ecology) proposed a causal model of specific aboveground net primary productivity (SANPP, g g-1 day-1). SANPP is defined as the net increase in aboveground biomass per unit time of a community standardised per gram of living biomass (Shipley et al. 2006, Ecology Letters). Their model writes SANPP as follows:
+Garnier et al. (2004, Ecology) proposed a causal model of aboveground net primary productivity (ANPP, g m-2 day-1). ANPP is defined as the net increase in aboveground biomass per unit area, per time of a community (Shipley et al. 2006, Ecology Letters). Their model writes ANPP as follows:
 
-SANPP = log10( sum(pij * exp(RGRi * (tf - t0)i ) ) )/dt
+SANPP = sum(M0ij * (exp(RGRi * (tf - t0)i )-1 )) /dt
 
-where pij is the relative standing biomass of species i in community j, RGRi is the maximum relative growth rate of species i, t0 and tf are the start and finish of species i's growing period and dt is the time interval over which SANPP was measured. This model is thus able to causally derive SANPP at the community level through species' maximum relative growth rates (RGRi), phenologies (tf and t0)i and their standing relative biomasses.
+where M0ij is the standing biomass of species i in community j, RGRi is the maximum relative growth rate of species i, t0 and tf are the start and finish of species i's growing period and dt is the time interval over which ANPP was measured. This model is thus able to causally derive ANPP at the community level through species' standing biomass, average relative growth rates (RGRi), phenologies (tf and t0)i.
 
-How does this model relate to the plant functional traits that are commonly measured in ecology? The expectation that community-level traits should predict ecosystem functioning is based on the assumption that commonly measured plant functional traits (e.g. SLA, leaf width etc.) are proxies for parameters like plant growth rates (Reich et al. 1992). In this model of SANPP, commonly measured plant functional traits would then be assumed to be correlated to species' RGRs which has been observed (Reich et al. 1992, Vile et al. 2006). 
+How does this model relate to the plant functional traits that are commonly measured in ecology? The expectation that community-level traits should predict ecosystem functioning is based on the assumption that commonly measured plant functional traits (e.g. SLA, leaf width etc.) are proxies for parameters like plant growth rates (Reich et al. 1992). In this model of ANPP, commonly measured plant functional traits would then be assumed to be correlated to species' RGRs which has been observed (Reich et al. 1992, Vile et al. 2006) or standing biomass (e.g. plant height).
 
-However, just like any complex ecosystem function or process, SANPP does not only depend on species' RGRs. As outlined in the model above, SANPP depends on individual relative abundances of species in a community (pij) and their phenology (tf and t0)i. These parameters may affect how well commonly measured plant functional traits can predict ecosystem functions. Moreover, the strength of the correlation between RGRs and traits like SLA will also affect predictions of ecosystem processes.
+However, just like any complex ecosystem function or process, ANPP does not only depend on species' RGRs. As outlined in the model above, ANPP depends on standing biomass and their phenology (tf and t0)i. These parameters may affect how well commonly measured plant functional traits can predict ecosystem functions. Moreover, the strength of the correlation between RGRs and traits like SLA will also affect predictions of ecosystem processes.
 
-We use Garnier et al.'s (2004) model of SANPP to examine the following to examine the expected predictive values of community-level traits for SANPP given uncertainty in the relationship between community-level traits and RGR and variation in species relative abundances and phenology. We do this by simulating communities. These communities vary in:
+We use Garnier et al.'s (2004) model of ANPP to examine the following to examine the expected predictive values of community-level traits for ANPP given uncertainty in the relationship between community-level traits and RGR and variation in species' standing biomasses and phenology. We do this by simulating communities. These communities vary in:
 
-+ 1. Their evenness in the relative abundance of different species
-+ 2. The correlation between plant traits (e.g. SLA) and relative growth rate
-+ 3. Whether species have similar or different phenologies
-+ 4. Whether species with high RGR dominate communities
++ 1. The standing biomass of different species in the community
++ 2. Their evenness in the relative abundance of different species
++ 3. The correlation between plant traits (e.g. SLA) and relative growth rate
++ 4. Whether species have similar or different phenologies
++ 5. Whether species with high RGR dominate communities
 
 The graph below plots the r2 value of a linear regression between community-weighted SLA and SANPP (y-axis) as a function of the correlation between SLA and RGR (x-axis). All species had the same phenology and species with high trait values tended to dominate the community (i.e. high relative abundance) as is commonly assumed in models of community assembly (Shipley et al. 2006, Science). These are optimal conditions for explaining ecosystem functions using community-level trait values. 
 
@@ -98,7 +99,8 @@ From this modelling exercise, it seems clear that species can have a strong infl
 The problem with trying to predict SANPP using simply the community weighted RGR is that it cannot distinguish between all these different potential conditions. Rather, it simply assumes that SANPP is determined by the most abundant RGR value in the community rather than accounting for phenology and how this can influence which species contribute strongly to SANPP.
 
 
-
+RGR was estimated based on fresh mass but ANPP is measured in dry mass. If we want to get values that match Garnier et al. 2004, growth rates need to be
+on the order of 0.005 and the phenology needs to only be 30 days this makes sense given that this is an RGR max and based on wet-weight in Vile et al. 2006.
 
 
 
