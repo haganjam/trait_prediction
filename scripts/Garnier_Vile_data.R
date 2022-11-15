@@ -40,6 +40,11 @@ vile_ra <-
 vile_ra <- bind_cols(tibble(id = rep(1:12, each = length(unique(vile_rgr$Species))) ), 
                      vile_ra)
 
+# check if these values are relative abundance
+vile_ra %>% 
+  group_by(id) %>%
+  summarise(sum_live_biomass = sum(live_biomass))
+
 # get the two most dominant species per plot id
 vile_ra <- 
   vile_ra %>%
