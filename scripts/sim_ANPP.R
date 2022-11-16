@@ -39,15 +39,14 @@
 #' @param bio_m - average standing biomass of a normal distribution
 #' @param bio_sd - standard deviation of a normal distribution describing average standing biomass
 #' @param dt - growing season length (days)
-#' @param pheno - either picks random phenology or keeps all phenologies equal for all species
-#'  1. pheno = "random"
-#'  2. pheno = "equal"
+#' @param pheno_sd - standard deviation of a normal distribution determining species' phenology
+#' as phenology ~ Normal(dt/2, pheno_sd)
 #' 
 
 sim_SP <- function(com = 20, sp = 10, even_par = 0.5, even_mix = FALSE, com_mat = NA, 
                    mu = c(100, 0.5), sd = c(40, 0.2), r = 0.5,
                    bio_m = 200, bio_sd = 50,
-                   dt = 60, pheno = "random" ) {
+                   dt = 60, pheno_sd = 0 ) {
   
   # load relevant libraries
   library(dplyr)
@@ -124,24 +123,10 @@ sim_SP <- function(com = 20, sp = 10, even_par = 0.5, even_mix = FALSE, com_mat 
     
     lapply(1:sp, function(x) {
       
-      if(pheno == "random") {
-        
-        ymin <- runif(n = 1, min = 0, max = dt/5 )
-        ymax <- runif(n = 1, min = (dt/5)*4, max = dt )
-        
-      } else if (pheno == "equal") {
-        
-        ymin <- 0
-        ymax <- dt
-        
-      }
+      t0f <- rnorm(n = 1, mean = dt/2, sd = pheno_sd)
       
-      # round and sort the min and max values to an integer
-      z <- sort(round(c(ymin, ymax), 0))
-      
-      df <- data.frame(sp = paste0("sp_", x))
-      df$t0 <- z[1]
-      df$tf <- z[2]
+      df <- data.frame(sp = paste0("sp_", x),
+                       t0f = round(t0f, 0))
       
       return(df)
       
@@ -153,31 +138,68 @@ sim_SP <- function(com = 20, sp = 10, even_par = 0.5, even_mix = FALSE, com_mat 
                         traits, 
                         by = "sp")
   
-  return(prod.dat)
+  # calculate ANPP
+  prod.dat$ANPP<- with(prod.dat,
+                       (M0*(exp(RGR*(t0f)) - 1)) )
+  
+  # summarise to the community-level
+  prod.sum <- 
+    prod.dat %>%
+    group_by(com) %>%
+    summarise(sum_M0 = sum(M0),
+              cor_dom = cor(RGR, M0),
+              mean_pheno = sum( pi*(t0f) ),
+              CWM_SLA = sum(pi*SLA),
+              CWM_RGR = sum(pi*RGR),
+              ANPP = (sum(ANPP)/dt), .groups = "drop" )
+  
+  # fit a linear model to get the RGR r2 value
+  lm.x <- lm(ANPP ~ CWM_RGR, data = prod.sum)
+  lm.x <- summary(lm.x)
+  r2_RGR <- lm.x$r.squared
+  
+  # fit a linear model to get the RGR r2 value
+  lm.x <- lm(log(ANPP) ~ CWM_RGR, data = prod.sum)
+  lm.x <- summary(lm.x)
+  r2_ln_RGR <- lm.x$r.squared
+  
+  # fit a linear model to get the SLA r2 value
+  lm.y <- lm(ANPP ~ CWM_SLA, data = prod.sum)
+  lm.y <- summary(lm.y)
+  r2_SLA <- lm.y$r.squared
+  
+  # fit a linear model to get the SLA r2 value on log(ANPP)
+  lm.y <- lm(log(ANPP) ~ CWM_SLA, data = prod.sum)
+  lm.y <- summary(lm.y)
+  r2_ln_SLA <- lm.y$r.squared
+  
+  # pull this into a data.frame
+  df.out <- data.frame(ANPP_mean = mean(prod.sum$ANPP),
+                       ANPP_sd = sd(prod.sum$ANPP),
+                       pheno_obs_mean = mean(prod.sum$mean_pheno),
+                       pheno_obs_sd = sd(prod.sum$mean_pheno),
+                       M0_negative = any(prod.dat$M0 < 0),
+                       cor_dom = median(prod.sum$cor_dom),
+                       r2_SLA = round(r2_SLA, 3),
+                       r2_ln_SLA = round(r2_ln_SLA, 3),
+                       r2_RGR = round(r2_RGR, 3),
+                       r2_ln_RGR = round(r2_ln_RGR, 3))
+  
+  list.out <- list(prod.dat,
+                   prod.sum,
+                   df.out)
+  
+  return(list.out)
   
 }
 
 # test the sim_SP() function
 sim_SP(com = 20, sp = 10, even_par = 0.25, even_mix = FALSE, com_mat = NA, 
        mu = c(100, 0.5), sd = c(40, 0.2), r = 0.5,
-       bio_m = 200, bio_sd = 50,
-       dt = 60, pheno = "random")
+       bio_m = 1000, bio_sd = 200,
+       dt = 100, pheno_sd = 0)
 
 # test the sim_SP() when using a custom community matrix
-
-# generate a community matrix with only one species per community
-RA01 <- 
-  sapply(1:20, function(x) {
-    y <- rep(0, 10)
-    y[sample(1:length(y), 1)] <- 100
-    return(y)
-  } ) %>%
-  t()
-
-sim_SP(com = 20, sp = 10, even_par = 0.25, even_mix = FALSE, com_mat = RA01, 
-       mu = c(100, 0.5), sd = c(40, 0.2), r = 0.5,
-       bio_m = 200, bio_sd = 50,
-       dt = 60, pheno = "random")
 
 
 # run a set of simulations
@@ -188,14 +210,21 @@ library(betapart)
 library(faux)
 
 # set-up a data.frame for simulations
+
+# set-up parameters that don't change
+com <- 20
+sp <- 10
+mu <- c(100, 0.5)
+sd <- c(40, 0.2)
+
 sim.df <- 
   expand.grid(rep = 1:5, 
-              pheno = c("equal", "random"),
-              dt = c(100),
-              even_par = round(seq(0.1, 20, length.out = 5), 1),
-              r = seq(0.05, 0.95, 0.10),
+              pheno_sd = c(0, 5, 10),
+              dt = c(90),
+              even_par = round(seq(0.1, 20, length.out = 10), 1),
+              r = seq(0.10, 0.9, 0.10),
               bio_m = c(1000),
-              bio_sd = seq(0, 400, by = 20) ) %>%
+              bio_sd = seq(0, 400, length.out =  10) ) %>%
   arrange(rep) %>%
   as_tibble()
 dim(sim.df)
@@ -211,57 +240,20 @@ for(i in 1:nrow(sim.df)) {
   # get ith row of the data
   df.x <- sim.df[i,]
   
-  prod.dat <- 
-    sim_SP(com = 20, sp = 10, even_par = df.x[["even_par"]], even_mix = FALSE, com_mat = NA, 
-           mu = c(100, 0.5), sd = c(40, 0.2), r = df.x[["r"]],
+  list.out <- 
+    sim_SP(com = com, sp = sp, even_par = df.x[["even_par"]], even_mix = FALSE, com_mat = NA, 
+           mu = mu, sd = sd, r = df.x[["r"]],
            bio_m = df.x[["bio_m"]], bio_sd = df.x[["bio_sd"]],
-           dt = 100, pheno = df.x[["pheno"]])
+           dt = df.x[["dt"]], pheno_sd = df.x[["pheno_sd"]])
   
   # write to a list
-  data.full[[i]] <- prod.dat
-  
-  # calculate SANPP
-  prod.dat$ANPP<- with(prod.dat,
-                       (M0*(exp(RGR*(tf-t0)) - 1)) )
-  
-  # summarise to the community-level
-  prod.sum <- 
-    prod.dat %>%
-    group_by(com) %>%
-    summarise(sum_M0 = sum(M0),
-              cor_dom = cor(RGR, M0),
-              CWM_pheno = mean( pi*(tf-t0) ),
-              CWM_SLA = sum(pi*SLA),
-              CWM_RGR = sum(pi*RGR),
-              ANPP = (sum(ANPP)/df.x[["dt"]]) )
+  data.full[[i]] <- list.out[[1]]
   
   # write to a list
-  data.sum[[i]] <- prod.sum
-  
-  # fit a linear model to get the RGR r2 value
-  lm.x <- lm(ANPP ~ CWM_RGR, data = prod.sum)
-  lm.x <- summary(lm.x)
-  r2_RGR <- lm.x$r.squared
-  
-  # fit a linear model to get the SLA r2 value
-  lm.y <- lm((ANPP) ~ CWM_SLA, data = prod.sum)
-  lm.y <- summary(lm.y)
-  r2_SLA <- lm.y$r.squared
-  
-  # fit a linear model to get the SLA r2 value on log(ANPP)
-  lm.z <- lm(log(ANPP) ~ CWM_SLA, data = prod.sum)
-  lm.z <- summary(lm.z)
-  r2_ln_SLA <- lm.z$r.squared
-  
-  # pull this into a data.frame
-  df.out <- data.frame(M0_negative = any(prod.dat$M0 < 0),
-                       cor_dom = median(prod.sum$cor_dom),
-                       r2_SLA = round(r2_SLA, 3),
-                       r2_ln_SLA = round(r2_ln_SLA, 3),
-                       r2_RGR = round(r2_RGR, 3))
+  data.sum[[i]] <- list.out[[2]]
   
   # write to a list
-  data.out[[i]] <- df.out
+  data.out[[i]] <- list.out[[3]]
   
 }
 
@@ -274,15 +266,14 @@ sim.out.df <-
   sim.out.df %>%
   filter(M0_negative != TRUE)
 
-
 # simulate a set of parameters with perfect conditions
 sim.df2 <- 
-  expand.grid(rep = 1:5, 
-              pheno = c("equal"),
-              dt = 60,
-              even_par = round(seq(0.1, 20, length.out = 5), 1),
+  expand.grid(rep = 1:50, 
+              pheno = 0,
+              dt = c(90),
               r = 0.99,
-              bio_m = c(100) ) %>%
+              bio_m = c(1000),
+              bio_sd = c(0)) %>%
   arrange(rep) %>%
   as_tibble()
 dim(sim.df2)
@@ -297,58 +288,21 @@ for(i in 1:nrow(sim.df2)) {
   df.x <- sim.df2[i,]
   
   RA01 <- 
-    sapply(1:20, function(x) {
-      y <- rep(0, 10)
+    sapply(1:com, function(x) {
+      y <- rep(0, sp)
       y[sample(1:length(y), 1)] <- df.x[["bio_m"]]
       return(y)
     } ) %>%
     t()
   
-  prod.dat <- 
-    sim_SP(com = 20, sp = 10, even_par = df.x[["even_par"]], even_mix = FALSE, com_mat = RA01, 
-           mu = c(100, 0.5), sd = c(40, 0.2), r = df.x[["r"]],
-           bio_m = NA, bio_sd = NA,
-           dt = df.x[["dt"]], pheno = df.x[["pheno"]])
-  
-  # calculate SANPP
-  prod.dat$ANPP<- with(prod.dat,
-                       (M0*(exp(RGR*(tf-t0)) - 1)) )
-  
-  # summarise to the community-level
-  prod.sum <- 
-    prod.dat %>%
-    group_by(com) %>%
-    summarise(sum_M0 = sum(M0),
-              cor_dom = cor(RGR, M0),
-              CWM_pheno = mean( pi*(tf-t0) ),
-              CWM_SLA = sum(pi*SLA),
-              CWM_RGR = sum(pi*RGR),
-              ANPP = (sum(ANPP)/df.x[["dt"]]) )
-  
-  # fit a linear model to get the RGR r2 value
-  lm.x <- lm(ANPP ~ CWM_RGR, data = prod.sum)
-  lm.x <- summary(lm.x)
-  r2_RGR <- lm.x$r.squared
-  
-  # fit a linear model to get the SLA r2 value
-  lm.y <- lm(ANPP ~ CWM_SLA, data = prod.sum)
-  lm.y <- summary(lm.y)
-  r2_SLA <- lm.y$r.squared
-  
-  # fit a linear model to get the SLA r2 value on log(ANPP)
-  lm.z <- lm(log(ANPP) ~ CWM_SLA, data = prod.sum)
-  lm.z <- summary(lm.z)
-  r2_ln_SLA <- lm.z$r.squared
-  
-  # pull this into a data.frame
-  df.out <- data.frame(M0_negative = any(prod.dat$M0 < 0),
-                       cor_dom = median(prod.sum$cor_dom),
-                       r2_SLA = round(r2_SLA, 3),
-                       r2_ln_SLA = round(r2_ln_SLA, 3),
-                       r2_RGR = round(r2_RGR, 3))
+  list.out <- 
+    sim_SP(com = com, sp = sp, even_par = df.x[["even_par"]], even_mix = FALSE, com_mat = RA01, 
+           mu = mu, sd = sd, r = df.x[["r"]],
+           bio_m = df.x[["bio_m"]], bio_sd = df.x[["bio_sd"]],
+           dt = df.x[["dt"]], pheno_sd = df.x[["pheno_sd"]])
   
   # write to a list
-  data.perfect[[i]] <- df.out
+  data.perfect[[i]] <- list.out[[3]]
   
 }
 
@@ -357,60 +311,77 @@ sim.out.df2 <- bind_cols(sim.df2, bind_rows(data.perfect))
 head(sim.out.df2)
 
 # remove any where the M0 was negative
-sim.out.df <- 
-  sim.out.df %>%
+sim.out.df2 <- 
+  sim.out.df2 %>%
   filter(M0_negative != TRUE)
 
-# calculate the average and standard deviation of the r2_SLA for the perfect simulation
-m1 <- mean(sim.out.df2$r2_SLA)
+mean(sim.out.df2$r2_SLA)
+m1 <- mean(sim.out.df2$r2_ln_SLA)
 print(m1)
-sd1 <- sd(sim.out.df2$r2_SLA)
+sd1 <- sd(sim.out.df2$r2_ln_SLA)
 print(sd1)
+
+# check the range in pheno_sd values
+range(sim.out.df$pheno_sd)
+hist(sim.out.df$pheno_sd)
+
+# get quantiles of pheno_sd:
+sim.out.df %>%
+  filter(pheno == "random") %>%
+  pull(pheno_sd) %>%
+  quantile(0.5)
 
 # load the ggplot2 library
 library(ggplot2)
 
-i <- sample(1:length(data.sum), 1)
-sim.df[i,]
-par(mfrow = c(1, 2))
-plot(data.sum[[i]]$CWM_SLA, (data.sum[[i]]$ANPP) )
-plot(data.sum[[i]]$CWM_SLA, log(data.sum[[i]]$ANPP) )
-
-mean(sim.out.df$r2_SLA)
-mean(sim.out.df$r2_ln_SLA)
-
-ggplot(data = sim.out.df %>% 
+ggplot(data = sim.out.df %>%
          filter(pheno == "equal") %>%
          mutate(`r - (RGR ~ SLA)` = as.character(r)),
-       mapping = aes(x = bio_sd, y = r2_SLA, colour = `r - (RGR ~ SLA)`)) +
+       mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
   geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
               colour = "red") +
   geom_point(mapping = aes(x = 0, y = m1),
                colour = "red") +
   geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
-  ylab("r2 - (ANPP ~ CWM SLA)") +
+  ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
   xlab("SD standing biomass (g m-2)") +
   geom_smooth(se = FALSE) +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
-  ggtitle("Phenology: Equal") +
   theme_bw()
 
-ggplot(data = sim.out.df %>% 
+ggplot(data = sim.out.df %>%
          filter(pheno == "random") %>%
+         filter(pheno_sd > )
          mutate(`r - (RGR ~ SLA)` = as.character(r)),
-       mapping = aes(x = bio_sd, y = r2_SLA, colour = `r - (RGR ~ SLA)`)) +
+       mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
   geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
                colour = "red") +
   geom_point(mapping = aes(x = 0, y = m1),
              colour = "red") +
   geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
-  ylab("r2 - (ANPP ~ CWM SLA)") +
+  ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
   xlab("SD standing biomass (g m-2)") +
   geom_smooth(se = FALSE) +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
-  ggtitle("Phenology: Random") +
+  theme_bw()
+
+ggplot(data = sim.out.df %>%
+         filter(pheno == "random") %>%
+         filter(dt == 90) %>%
+         mutate(`r - (RGR ~ SLA)` = as.character(r)),
+       mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
+  geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
+               colour = "red") +
+  geom_point(mapping = aes(x = 0, y = m1),
+             colour = "red") +
+  geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
+  ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
+  xlab("SD standing biomass (g m-2)") +
+  geom_smooth(se = FALSE) +
+  scale_colour_viridis_d(option = "C", end = 0.95) +
+  scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
   theme_bw()
 
 ### END

@@ -34,14 +34,9 @@ The graph below plots the r2 value of a linear regression between community-weig
 From this (see below), it's clear that unless species' SLA is highly correlated to their RGR values (r > 0.5), the predictive value of SLA for SANPP is relatively low. Different colours represent different levels of species evenness in relative abundance.
 
 ```{r}
-ggplot(data = sim.out.df %>% filter(D == "dom", phen == "equal"),
-       mapping = aes(x = r, y = r2_SLA, colour = even)) +
-  geom_jitter(width = 0.015, alpha = 0.5, shape = 1) +
-  scale_colour_viridis_c(option = "C") +
-  geom_smooth(colour = "black", size = 0.5) +
-  ylab("r2: SANPP ~ CWM-SLA") +
-  xlab("r: RGR ~ SLA") +
-  theme_bw()
+
+
+
 ```
 Below, we plot the same graph as previously but now species do not have the same phenology and species with high trait values do not necessarily dominate the community.
 
@@ -50,14 +45,9 @@ The predictive value of SLA for SANPP (r2, y-axis) increases with the correlatio
 This is probably a more realistic representation because it's highly unlikely that species have the same phenology and always dominate where their trait values are high.
 
 ```{r}
-ggplot(data = sim.out.df %>% filter(D == "random", phen == "random"),
-       mapping = aes(x = r, r2_SLA, colour = even )) +
-  geom_jitter(width = 0.015, alpha = 0.5, shape = 1) +
-  scale_colour_viridis_c(option = "C") +
-  ylab("r2: SANPP ~ CWM-SLA") +
-  xlab("r: RGR ~ SLA") +
-  geom_smooth(colour = "black", size = 0.5) +
-  theme_classic()
+
+
+
 ```
 
 Therefore, this model suggests that we shouldn't really expect community-level traits like the community weighted mean of SLA to predict ecosystem functions like SANPP very well. Traits like SLA are imperfect proxies for things like RGR and other factors like varying phenology and dominance also affect the expected explanatory power. 
@@ -86,22 +76,17 @@ This is difficult to prove mathematically but it explains several key observatio
 
 ## Implications
 
-From this modelling exercise, it seems clear that species can have a strong influence on SANPP in a patch in several different ways:
+From this modelling exercise, it seems clear that species can have a strong influence on ANPP in a patch in several different ways. They can have high standing biomass, high RGRs or long growing season. Therefore, when we find that community-weighted SLA does not explain much variation in productivity, it could be because there are differences in phenology or differences in standing biomass.
 
-+ 1. Low relative abundance species can have very high RGRs and a long growing season.
+However, without relevant theory that links functional traits to fundamental parameters that determine the process rates in an ecosystem, it is difficult to explain such results. Right now, in the plant ecology literature, we are seeing a trait relationship with an ecosystem process as the end-goal rather than seeing the trait as a useful way to get at a given process in question.
 
-+ 2. High relative abundance species can have very low RGRs and a long growing season.
 
-+ 3. High relative abundance species can have very high RGRs and a short growing season
-
-+ 4. High relative abundance species can have very high RGRs and a long growing season (i.e. the Darwinian demon)
-
-The problem with trying to predict SANPP using simply the community weighted RGR is that it cannot distinguish between all these different potential conditions. Rather, it simply assumes that SANPP is determined by the most abundant RGR value in the community rather than accounting for phenology and how this can influence which species contribute strongly to SANPP.
-
+## Other notes
 
 RGR was estimated based on fresh mass but ANPP is measured in dry mass. If we want to get values that match Garnier et al. 2004, growth rates need to be
 on the order of 0.005 and the phenology needs to only be 30 days this makes sense given that this is an RGR max and based on wet-weight in Vile et al. 2006.
 
+We will generally use the ln-transformed productivity as the response variable because sometimes there are cases when the productivity varies on several orders of magnitude. Interestingly, this will often happen when the relative abundance distribution is very skewed. I think this happens because then some communities get very high ANPP if the phenology is long enough (i.e. exponential term in the equation).
 
 
 
