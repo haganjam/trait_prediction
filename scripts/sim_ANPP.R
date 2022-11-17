@@ -197,7 +197,7 @@ sim_SP <- function(com = 20, sp = 10, even_par = 0.5, even_mix = FALSE, com_mat 
 sim_SP(com = 20, sp = 10, even_par = 0.25, even_mix = FALSE, com_mat = NA, 
        mu = c(100, 0.5), sd = c(40, 0.2), r = 0.5,
        bio_m = 1000, bio_sd = 200,
-       dt = 100, pheno_sd = 0)
+       dt = 100, pheno_sd = 10)
 
 # test the sim_SP() when using a custom community matrix
 
@@ -218,7 +218,7 @@ mu <- c(100, 0.5)
 sd <- c(40, 0.2)
 
 sim.df <- 
-  expand.grid(rep = 1:5, 
+  expand.grid(rep = 1:10, 
               pheno_sd = c(0, 5, 10),
               dt = c(90),
               even_par = round(seq(0.1, 20, length.out = 10), 1),
@@ -269,7 +269,7 @@ sim.out.df <-
 # simulate a set of parameters with perfect conditions
 sim.df2 <- 
   expand.grid(rep = 1:50, 
-              pheno = 0,
+              pheno_sd = 0,
               dt = c(90),
               r = 0.99,
               bio_m = c(1000),
@@ -322,66 +322,98 @@ sd1 <- sd(sim.out.df2$r2_ln_SLA)
 print(sd1)
 
 # check the range in pheno_sd values
-range(sim.out.df$pheno_sd)
-hist(sim.out.df$pheno_sd)
-
-# get quantiles of pheno_sd:
-sim.out.df %>%
-  filter(pheno == "random") %>%
-  pull(pheno_sd) %>%
-  quantile(0.5)
+range(sim.out.df$pheno_obs_sd)
+hist(sim.out.df$pheno_obs_sd)
 
 # load the ggplot2 library
 library(ggplot2)
+library(here)
 
-ggplot(data = sim.out.df %>%
-         filter(pheno == "equal") %>%
+# load the plotting theme
+source(here("scripts/function_plotting_theme.R"))
+
+p1 <- 
+  ggplot(data = sim.out.df %>%
+         filter(pheno_sd == 0) %>%
          mutate(`r - (RGR ~ SLA)` = as.character(r)),
        mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
-  geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
-              colour = "red") +
-  geom_point(mapping = aes(x = 0, y = m1),
-               colour = "red") +
-  geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
+  geom_ribbon(mapping = aes(x = bio_sd, ymin = m1-sd1, ymax = m1+sd1),
+              colour = NA, fill = "grey", alpha = 0.2) +
+  annotate(geom = "text", x =20, y = 0.98, 
+           label = "r2-max", size = 2.5) +
+  # geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
+              # colour = "red") +
+  # geom_point(mapping = aes(x = 0, y = m1),
+              # colour = "red") +
+  geom_jitter(alpha = 0.1, shape = 1, width = 4, height = 0.01) +
   ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
   xlab("SD standing biomass (g m-2)") +
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, size = 0.5) +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
-  theme_bw()
+  ggtitle("Phenology SD = 0") +
+  theme_meta() +
+  theme(legend.key = element_rect(fill = NA),
+        plot.title = element_text(hjust = 0.5))
 
-ggplot(data = sim.out.df %>%
-         filter(pheno == "random") %>%
-         filter(pheno_sd > )
+p2 <- 
+  ggplot(data = sim.out.df %>%
+         filter(pheno_sd == 5) %>%
          mutate(`r - (RGR ~ SLA)` = as.character(r)),
        mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
-  geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
-               colour = "red") +
-  geom_point(mapping = aes(x = 0, y = m1),
-             colour = "red") +
-  geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
-  ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
+  geom_ribbon(mapping = aes(x = bio_sd, ymin = m1-sd1, ymax = m1+sd1),
+              colour = NA, fill = "grey", alpha = 0.2) +
+  annotate(geom = "text", x =20, y = 0.98, 
+           label = "r2-max", size = 2.5) +
+  # geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
+  # colour = "red") +
+  # geom_point(mapping = aes(x = 0, y = m1),
+  # colour = "red") +
+  geom_jitter(alpha = 0.1, shape = 1, width = 4, height = 0.01) +
+  ylab(NULL) +
   xlab("SD standing biomass (g m-2)") +
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, size = 0.5) +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
-  theme_bw()
+  ggtitle("Phenology SD = 5") +
+  theme_meta() +
+  theme(legend.key = element_rect(fill = NA),
+        plot.title = element_text(hjust = 0.5))
 
-ggplot(data = sim.out.df %>%
-         filter(pheno == "random") %>%
-         filter(dt == 90) %>%
+p3 <- 
+  ggplot(data = sim.out.df %>%
+         filter(pheno_sd == 10) %>%
          mutate(`r - (RGR ~ SLA)` = as.character(r)),
        mapping = aes(x = bio_sd, y = r2_ln_SLA, colour = `r - (RGR ~ SLA)`)) +
-  geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
-               colour = "red") +
-  geom_point(mapping = aes(x = 0, y = m1),
-             colour = "red") +
-  geom_jitter(alpha = 0.1, shape = 1, width = 2, height = 0.01) +
-  ylab("r2 - (ln(ANPP) ~ CWM SLA)") +
+  geom_ribbon(mapping = aes(x = bio_sd, ymin = m1-sd1, ymax = m1+sd1),
+              colour = NA, fill = "grey", alpha = 0.2) +
+  annotate(geom = "text", x =20, y = 0.98, 
+           label = "r2-max", size = 2.5) +
+  # geom_segment(mapping = aes(x = 0, xend = 0, y = m1-sd1, yend = m1+sd1),
+  # colour = "red") +
+  # geom_point(mapping = aes(x = 0, y = m1),
+  # colour = "red") +
+  geom_jitter(alpha = 0.1, shape = 1, width = 4, height = 0.01) +
+  ylab(NULL) +
   xlab("SD standing biomass (g m-2)") +
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, size = 0.5) +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   scale_y_continuous(breaks = seq(0, 0.90, 0.10)) +
-  theme_bw()
+  ggtitle("Phenology SD = 10") +
+  theme_meta() +
+  theme(legend.key = element_rect(fill = NA),
+        plot.title = element_text(hjust = 0.5))
+plot(p3)
+
+# load the ggpubr library
+library(ggpubr)
+
+p123 <- 
+  ggarrange(p1, p2, p3, nrow = 1, ncol = 3,
+          widths = c(1.15, 1, 1),
+          labels = c("a", "b", "c"),
+          font.label = list(face = "plain", size = 10),
+          common.legend = TRUE)
+plot(p123)
 
 ### END
