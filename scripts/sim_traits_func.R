@@ -60,7 +60,7 @@ sim_traits <- function(sp = 10, com = 20,
     )
     
     # bind community and species information
-    y <- cbind(data.frame(com = 1:com, sp = paste0("sp_", i)), x)
+    y <- cbind(data.frame(com = as.character(1:com), sp = paste0("sp_", i)), x)
     
     # add to list
     t12_ind[[i]] <- y
@@ -74,11 +74,5 @@ sim_traits <- function(sp = 10, com = 20,
   return(t12_ind)
   
 }
-
-# test the function
-sim_traits(sp = 10, com = 20,
-           t1 = "SLA", t2 = "RGR", 
-           mu_t1 = 100, mu_t2 = 0.5, sd_t1 = 20, sd_t2 = 0.1, r = 0.5,
-           Eind_t1 = 5, Eind_t2 = 0.02)
 
 ### END

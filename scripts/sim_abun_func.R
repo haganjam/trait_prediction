@@ -20,7 +20,7 @@
 
 sim_abund <- function(sp = 10, com = 20, com_mat = FALSE,
                       even_par = 0.5, even_mix = FALSE, 
-                      lambda = 100, lambda = TRUE) {
+                      lambda = 100, lambda_equal = TRUE) {
   
   # load the dplyr library
   library(dplyr)
@@ -69,7 +69,7 @@ sim_abund <- function(sp = 10, com = 20, com_mat = FALSE,
     apply(RA, 1, function(x) {
       
       df <- data.frame(sp = paste0("sp_", 1:length(x)))
-      df$M0 <- x
+      df$N <- x
       
       return(df)
       
@@ -80,7 +80,7 @@ sim_abund <- function(sp = 10, com = 20, com_mat = FALSE,
   RA <- 
     RA %>%
     group_by(com) %>%
-    mutate(pi = M0/sum(M0)) %>%
+    mutate(pi = N/sum(N)) %>%
     ungroup()
   
   # return the data.frame
@@ -88,5 +88,4 @@ sim_abund <- function(sp = 10, com = 20, com_mat = FALSE,
   
 }
 
-
-
+### END
