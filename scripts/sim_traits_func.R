@@ -40,6 +40,9 @@ sim_traits <- function(sp = 10, com = 20,
   # round off the values
   t12_mu <- round(t12_mu, 3)
   
+  # if less than 0, then set to zero
+  t12_mu[t12_mu < 0] <- 0
+  
   # add a species column
   t12_mu <- cbind(data.frame(sp = paste0("sp_", 1:sp)), t12_mu)
   
