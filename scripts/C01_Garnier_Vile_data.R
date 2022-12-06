@@ -111,8 +111,6 @@ vile_dat %>%
   summarise(SANPP_est = log10(sum( live_biomass*exp(RGRmax*6) ))/90,
             SANPP = median(SANPP)/1000)
 
-
-
 # make a list to fit the productivity model
 d <- 
   list(S = as.integer(as.factor(vile_dat$Species)),
