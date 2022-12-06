@@ -97,8 +97,7 @@ on the order of 0.005 and the phenology needs to only be 30 days this makes sens
 
 We will generally use the ln-transformed productivity as the response variable because sometimes there are cases when the productivity varies on several orders of magnitude. Interestingly, this will often happen when the relative abundance distribution is very skewed. I think this happens because then some communities get very high ANPP if the phenology is long enough (i.e. exponential term in the equation).
 
-
-
+When all species have equal abundance, then everything just becomes equal i.e. if communities have identical species composition...
 
 
 
