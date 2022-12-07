@@ -29,6 +29,24 @@ We use Garnier et al.'s (2004) model of ANPP to examine the expected predictive 
 
 In addition, communities vary in the evenness of the their relative abundance distributions.
 
+We start using simple scenarios that demonstrate the inherent limitations of predicting a complex ecosystem process using CWMs. We demonstrate with simple simulations and mathematical proofs these limitations.
+
+*Proof of concept*
+
+For the proof of concept simulations, we take the simplest possible case of three species and three communities (number of communities does not matter as long as number of species = number of communities). Each of the species completely dominates one of the communities (i.e. relative abundance = 1). We then vary three different parameters:
+
++ 1. The correlation between SLA and RGR (0.1 - 0.99)
+
++ 2. The standard deviation of standing biomass (M0) between the three communities (drawn from a normal distribution with mean = 1000)
+
++ 3. The standard deviation of the phenological period (t0f) between the three species (drawn from a normal distribution with mean = 60)
+
+We then examine the correlation between the community-weighted mean (CWM) of SLA and ANPP. We show that under "perfect" conditions where the communities do not vary in standing biomass (M0), all species have equal phenology (t0f = 60 for all three species) and the correlation between SLA and RGR is 0.99, the CWM of SLA effectively predicts ANPP perfectly (r2 ~ 0.99).
+
+But, when we start to vary these parameters independently, the results change. Deviating from these perfect conditions in just one of the parameters leads to considerable reduction in the explanatory power of CWM SLA on ANPP.
+
+
+
 *How do we vary these parameters?*
 
 The basis of the simulations is to simulate a relative abundance distribution of *sp* species that inhabit *com* communities. The relative abundance distribution of these species in each community is drawn from a Dirichlet distribution with an equal alpha value for each species.
@@ -73,6 +91,7 @@ It's important to emphasise that we do not claim that this model of ANPP is "cor
 
 We are also not claiming that we should abandon traits but rather that we should go back to thinking about why we started measuring traits in the first place rather than using them without context for the processes that we trying to approximate.
 
+
 ## Additional notes
 
 There are conditions that we can derive mathematically where the community weighted mean of RGR should be perfectly correlated with SANPP. However, with this model, these conditions are rather limited.
@@ -82,6 +101,8 @@ From doing simulations and trying to do the mathematics, I have derived the foll
 1. When there is only one species in each community, then the community weighted mean of RGR will be perfectly correlated with SANPP.
 
 We can prove this mathematically as follows:
+
+
 
 
 2. When multiple species are present in a community, the community weighted mean of RGR is calculated as the sum(pi x RGR). In contrast, the SANPP is calculated as as log( sum(pi x exp(RGR x (tf-t0)) ) )/dt. Therefore, rather than multiplying the proportion by the RGR, we multiply it by the exponential of the RGR scaled by the phenological period. Thus, the longer the phenological period is, the greater weight is put on the trait value (RGR) relative to the relative abundance (pi). The consequence of this is that the highest productivity individual species will often be the species with high RGR with a long phenological period rather than the species with the highest relative abundance (pi). In contrast, with a community weighted mean, the relative proportion has a much stronger influence so the community weighted mean generally matches the species' trait value.
