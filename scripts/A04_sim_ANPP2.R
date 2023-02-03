@@ -11,6 +11,95 @@ source(here("scripts/A03_sim_traits_func.R"))
 
 # load relevant libraries
 library(dplyr)
+library(ggplot2)
+
+# set up number of species
+sp <- 10
+
+# set up the number of communities
+com <- 20
+
+# get traits from the sim_traits() function
+df.traits1 <- 
+  sim_traits(sp = sp, com = com,
+             t1 = "SLA", t2 = "RGR", 
+             mu_t1 = 100, mu_t2 = 10, sd_t1 = 30, sd_t2 = 2, r = 0.75,
+             Eind_t1 = 5, Eind_t2 = 0.5)
+
+# plot this trait distributions
+ggplot(data = df.traits1,
+       mapping = aes(x = SLA, fill = sp, colour = sp)) +
+  geom_density(alpha = 0.75) +
+  scale_fill_viridis_d(option = "D") +
+  scale_colour_viridis_d(option = "D") +
+  theme_classic()
+
+ggplot(data = df.traits1,
+       mapping = aes(x = RGR, fill = sp, colour = sp)) +
+  geom_density(alpha = 0.75) +
+  scale_fill_viridis_d(option = "D") +
+  scale_colour_viridis_d(option = "D") +
+  theme_classic()
+
+ggplot(data = df.traits1,
+       mapping = aes(x = SLA, y = RGR, colour = sp)) +
+  geom_point() +
+  scale_colour_viridis_d(option = "D") +
+  theme_classic()
+
+# calculate the average trait values of the different species across communities
+df.traits1
+
+# simulate a set of communities with some relative abundances
+sad_list <- 
+  
+  lapply(1:com, function(x) {
+  
+  # sp_pool size determined by J and theta together (can we calculate this?)
+  sad.x <- mobsim::sim_sad(s_pool = NA, n_sim = 100, sad_type = c("mzsm"),
+                       sad_coef = list("J" = 10000, "theta" = 1))
+  
+  # remove the class attributes
+  attr(sad.x, "class") <- NULL
+  names(sad.x) <- NULL
+  
+  # initialise an empty vector with 10 species
+  sp_vec <- rep(0, sp)
+  sp_vec[sample(1:sp, size = length(sad.x))] <- sad.x
+  
+  # wrap into a data.frame
+  sp_df <- tibble(com = as.character(x),
+                  sp = paste0("sp_", 1:sp),
+                  abund = sp_vec)
+  
+  return(sp_df)
+  
+} )
+
+# bind into a data.frame
+sad_df <- bind_rows(sad_list)
+
+# bind the sad_df data.frame to the trait data
+df.test <- full_join(sad_df, df.traits1, by = c("com", "sp"))
+print(df.test)
+
+# check the correlation between RGR and abundance
+plot(df.test$RGR, df.test$abund)
+ggplot(data = df.test, 
+       mapping = aes(x = RGR, y = abund, colour = com)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_colour_viridis_d() +
+  theme_classic() +
+  theme(legend.position = "none")
+
+# reorder to make the rank correlation perfect and re-plot
+com1 <- df.test[df.test$com == 4,]
+rnk <- rank(com1$RGR, ties.method = "random")
+round(sort(com1$abund), 1)[rnk]
+
+plot(com1$RGR, round(sort(com1$abund), 1)[rnk])
+
 
 # run a set of simulations
 sim.df <- expand.grid(rep = 1:2,
