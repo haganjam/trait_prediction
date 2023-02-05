@@ -26,7 +26,8 @@
 
 sim_traits <- function(sp = 10, com = 20,
                        t1, t2, mu_t1, mu_t2, sd_t1, sd_t2, r,
-                       Eind_t1, Eind_t2) {
+                       Eind_t1, Eind_t2, 
+                       t2_scale = 10) {
   
   # draw RGR and trait values
   t12_mu <- faux::rnorm_multi(n = sp, 
@@ -63,7 +64,7 @@ sim_traits <- function(sp = 10, com = 20,
     )
     
     # bind community and species information
-    y <- cbind(data.frame(com = as.character(1:com), sp = paste0("sp_", i)), x)
+    y <- cbind(data.frame(com = (1:com), sp = paste0("sp_", i)), x)
     
     # add to list
     t12_ind[[i]] <- y
@@ -72,6 +73,15 @@ sim_traits <- function(sp = 10, com = 20,
   
   # bind into a large data.frame
   t12_ind <- dplyr::arrange( dplyr::bind_rows(t12_ind), com )
+  
+  # scale trait2
+  t12_ind[[t2]] <- t12_ind[[t2]]/t2_scale
+  
+  # split by community
+  t12_ind <- split(t12_ind, t12_ind$com)
+  
+  # remove the names of the list
+  names(t12_ind) <- NULL
   
   # return this data.frame
   return(t12_ind)
