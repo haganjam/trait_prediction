@@ -29,7 +29,7 @@ com <- 20
 N <- 100
 
 # evenness parameters
-even <- c(5, 20)
+even <- c(0.5, 20)
 
 # expand grid to get 10 replicates of each correlation value
 r_vec <- c(0.01, seq(0.05, 0.95, 0.05), 0.99)
@@ -161,23 +161,39 @@ head(sim.df)
 # plot these results
 
 # no variation in phenology among species
-ggplot(data = sim.df |> dplyr::filter(pheno == "fixed"), 
+ggplot(data = sim.df |> dplyr::filter(cv_abund == 0.5, pheno == "fixed"), 
        mapping = aes(x = r_RGR_SLA,
-                     y = r2_CWM_FD_SLA)) +
-  geom_jitter(width = 0.01, shape = 1, alpha = 0.6) +
-  geom_smooth(se = TRUE, alpha = 0.3, size = 0.5, method = "lm",
-              formula = y~poly(x, 2), show.legend = FALSE) +
-  facet_wrap(~cv_abund) +
+                     y = r2_CWM_SLA)) +
+  geom_smooth(se = TRUE, alpha = 0.2, size = 0.5, method = "lm",
+              formula = y~poly(x, 2), fill = "darkred", colour = "darkred", show.legend = FALSE) +
+  geom_jitter(width = 0.01, shape = 1, alpha = 0.6, size = 2.5, colour = "darkred") +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_x_continuous(limits = c(0, 1)) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab("r2 SLA ~ SANPP") +
-  xlab("r RGR ~ SLA") +
+  ylab(expression(r^{2}~" [ LM: SLA ~ SANPP ]")) +
+  xlab("Pearson's r [ RGR ~ SLA ]") +
+  theme_meta() +
+  theme(legend.position = "top")
+
+ggplot(data = sim.df |> dplyr::filter(cv_abund == 20, pheno == "fixed"), 
+       mapping = aes(x = r_RGR_SLA,
+                     y = r2_CWM_SLA)) +
+  geom_smooth(se = TRUE, alpha = 0.2, size = 0.5, method = "lm",
+              formula = y~poly(x, 2), fill = "darkblue", colour = "darkblue", show.legend = FALSE) +
+  geom_jitter(width = 0.01, shape = 1, alpha = 0.6, size = 2.5, colour = "darkblue") +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_x_continuous(limits = c(0, 1)) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab(expression(r^{2}~" [ LM: SLA ~ SANPP ]")) +
+  xlab("Pearson's r [ RGR ~ SLA ]") +
   theme_meta() +
   theme(legend.position = "top")
   
+
 # variation in phenology among species (simulate this)
 ggplot(data = sim.df |> dplyr::filter(pheno == "variable"), 
        mapping = aes(x = r_RGR_SLA,
-                     y = r2_CWM_FD_SLA)) +
+                     y = r2_CWM_SLA)) +
   geom_jitter(width = 0.01, shape = 1, alpha = 0.6) +
   geom_smooth(se = TRUE, alpha = 0.3, size = 0.5, method = "lm",
               formula = y~poly(x, 2), show.legend = FALSE) +
