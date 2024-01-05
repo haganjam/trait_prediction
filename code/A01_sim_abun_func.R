@@ -2,9 +2,8 @@
 #' @title sim_abun()
 #' 
 #' @description Function to simulate the abundance of sp species in com communities.
-#' The function uses the Dirichlet distribution to simulate species relative abundances.
-#' These relative abundances are then multiplied by N, the number of individuals which
-#' we draw from a Poisson distribution.
+#' The function uses a lognormal distribution from the mobsim package to generate
+#' a species abundance distribution.
 #' 
 #' @param sp - number of species to simulate
 #' @param com - number of different communities to simulate
@@ -35,9 +34,10 @@ sim_abund <- function(sp, com, N, cv_abund = NA) {
       sp_vec[sample(1:sp, size = length(sad.x))] <- sad.x
       
       # wrap into a data.frame
-      sp_df <- tibble(com = x,
-                      sp = paste0("sp_", 1:sp),
-                      abund = sp_vec)
+      sp_df <- dplyr::tibble(com = x, sp = paste0("sp_", 1:sp), abund = sp_vec)
+      
+      # convert to relative abundance
+      sp_df$abund <- with(sp_df, abund/sum(abund))
       
       return(sp_df)
       

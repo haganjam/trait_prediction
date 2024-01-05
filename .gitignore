@@ -46,5 +46,5 @@ vignettes/*.pdf
 *.csv
 *.txt
 *.rds
-
+*.DS_Store
 

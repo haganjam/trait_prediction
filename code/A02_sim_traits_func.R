@@ -77,6 +77,10 @@ sim_traits <- function(sp = 10, com = 20,
   # scale trait2
   t12_ind[[t2]] <- t12_ind[[t2]]/t2_scale
   
+  # make sure the traits are positive
+  t12_ind[[t1]][ t12_ind[[t1]] <= 0 ] <- 0.001 
+  t12_ind[[t2]][ t12_ind[[t2]] <= 0 ] <- 0.001 
+  
   # split by community
   t12_ind <- split(t12_ind, t12_ind$com)
   

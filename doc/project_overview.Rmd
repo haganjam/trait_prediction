@@ -1,29 +1,36 @@
 ---
-title: "Predictive value of traits for ecosystem processes/functions"
-output: html_notebook
+title: "Predictive value of traits for ecosystem functions/processes"
+author: "James G. Hagan"
+date: "`r Sys.Date()`"
+output: rmarkdown::github_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Description of the project
 
-Several recent papers have suggested that the predictive value of functional traits for ecosystem processes/functions (function used hereafter) is relatively low (e.g. van der Plas et al. 2020). The basis for this claim usually comes from examining the coefficient of determination (r2) when attempting to predict an ecosystem function using a community-level trait (e.g. community weighted mean or functional diversity) using some sort of linear regression framework. In several cases, the r2 value is considered "low" by the authors (often around 0.20 or 0.30, at least for some traits). However, a question that has not been asked is: How much variation in an ecosystem function can we expect a community-level trait to reasonably explain? 
+Several recent papers have suggested that the predictive value of functional traits for ecosystem processes/functions (function used hereafter) is relatively low (e.g. van der Plas et al. 2020). The basis for this claim usually comes from examining the coefficient of determination ($r^2$) when attempting to predict an ecosystem function using a community-level trait (e.g. community weighted mean (CWM) or functional diversity metric (FD)) using some sort of linear regression framework. In several cases, the $r^2$ value is considered "low" by the authors (often around 0.20 or 0.30, at least for some traits). However, a question that has not been asked is: How much variation in an ecosystem function can we expect a community-level trait to reasonably explain? 
 
 Here, we aim to answer this question by showing that there are fundamental limits to the variation that a community-level trait can explain in community productivity, one of the most commonly studied ecosystem processes (van der Plas 2019). To do this, we use a model that derives plant productivity from growing season length, species' standing biomass, species growing phenology and species maximum relative growth rate (Garnier et al. 2004).
 
 ## Methods
 
-Garnier et al. (2004, Ecology) proposed a causal model of aboveground net primary productivity (ANPP, g m-2 day-1). ANPP is defined as the net increase in aboveground biomass per unit area, per time of a community (Shipley et al. 2006, Ecology Letters). Their model writes ANPP as follows:
+Garnier et al. (2004, Ecology) proposed a causal model of specific aboveground net primary productivity (SANPP, g kg-1 day-1). SANPP is the aboveground net primary productivity expressed as per gram of green biomass instead of per area. Their model writes SANPP as follows:
 
-ANPP = sum(M0ij * (exp(RGRi * (tf - t0)i )-1 )) /dt
+$$
+SANPP_j = \frac{ln(  \sum_{i=1}^n p_{ij}\cdot e^{RGR_i \cdot (tf-t0)_i}  )}{\Delta T}  
+$$
+where $p_{ij}$ is the relative abundance of species i in community j, $RGR_i$ is the maximum relative growth rate of species i, t0 and tf are the start and finish of species i's growing period and $\Delta T$ is the time interval over which SANPP was measured. This model is thus able to causally derive SANPP at the community level through species' relative abundances, average relative growth rates $(RGR_i)$, phenologies $(tf and t0)_i$.
 
-where M0ij is the standing biomass of species i in community j, RGRi is the maximum relative growth rate of species i, t0 and tf are the start and finish of species i's growing period and dt is the time interval over which ANPP was measured. This model is thus able to causally derive ANPP at the community level through species' standing biomass, average relative growth rates (RGRi), phenologies (tf and t0)i.
+How does this model relate to the plant functional traits that are commonly measured in ecology? The expectation that community-level traits should predict ecosystem functioning is based on the assumption that commonly measured plant functional traits (e.g. SLA, leaf width etc.) are proxies for parameters like plant growth rates (Reich et al. 1992). In this model of SANPP, commonly measured plant functional traits would then be assumed to be correlated to species' RGRs which has been observed (Reich et al. 1992, Vile et al. 2006).
 
-How does this model relate to the plant functional traits that are commonly measured in ecology? The expectation that community-level traits should predict ecosystem functioning is based on the assumption that commonly measured plant functional traits (e.g. SLA, leaf width etc.) are proxies for parameters like plant growth rates (Reich et al. 1992). In this model of ANPP, commonly measured plant functional traits would then be assumed to be correlated to species' RGRs which has been observed (Reich et al. 1992, Vile et al. 2006) or standing biomass (e.g. plant height).
+However, just like any complex ecosystem function or process, SANPP does not only depend on species' RGRs. As outlined in the model above, ANPP depends on species' relative abundances and their phenology $(tf and t0)_i$. These parameters may affect how well commonly measured plant functional traits can predict ecosystem functions. Moreover, the strength of the correlation between RGRs and traits like SLA will also affect predictions of ecosystem processes.
 
-However, just like any complex ecosystem function or process, ANPP does not only depend on species' RGRs. As outlined in the model above, ANPP depends on standing biomass and their phenology (tf and t0)i. These parameters may affect how well commonly measured plant functional traits can predict ecosystem functions. Moreover, the strength of the correlation between RGRs and traits like SLA will also affect predictions of ecosystem processes.
+We use Garnier et al.'s (2004) model of SANPP to examine the expected predictive value of community-level traits for SANPP given uncertainty in the relationship between community-level traits and RGR along with variation in species' standing biomasses and phenology. We do this by simulating communities. These communities vary in:
 
-We use Garnier et al.'s (2004) model of ANPP to examine the expected predictive value of community-level traits for ANPP given uncertainty in the relationship between community-level traits and RGR along with variation in species' standing biomasses and phenology. We do this by simulating communities. These communities vary in:
-
-+ 1. The standing biomass of different species in the community
++ 1. The relative abundance of different species in the community
 + 2. The correlation between plant traits (e.g. SLA) and relative growth rate
 + 3. Whether species have similar or different phenologies
 
