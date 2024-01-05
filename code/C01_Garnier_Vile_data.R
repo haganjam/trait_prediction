@@ -5,8 +5,6 @@
 library(readr)
 library(dplyr)
 library(tidyr)
-library(here)
-library(rethinking)
 
 # load the species RGR values from Vile et al. 2006
 vile_rgr <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_RGR.csv"))

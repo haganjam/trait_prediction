@@ -1,5 +1,5 @@
 
-# sim_ANPP2()
+# sim_SANPP()
 
 # load relevant functions
 source("code/A01_sim_abun_func.R")
@@ -13,16 +13,16 @@ library(ggplot2)
 # fixed parameters
 
 # set the phenology
-t0f <- 30
+t0f <- 50
 
 # set the timeframe
 dt <- 50
 
 # set up number of species
-sp <- 5
+sp <- 10
 
 # set up the number of communities
-com <- 10
+com <- 20
 
 # total individuals
 N <- 100
@@ -78,26 +78,38 @@ for(j in 1:nrow(par.grid)) {
   # bind the trait data to df2
   df2 <- dplyr::full_join(df1, dplyr::bind_rows(df.traits), by = c("com", "sp"))
   
+  # add the phenology to this data.frame
+  df2$t0f <- t0f
+  df2$pheno <- "fixed"
+  
+  # duplicate this data.frame with variable phenology
+  df3 <- df2
+  df3$t0f <- round(rep(runif(n = sp, min = 5, max = 30), com*length(even)), 0)
+  df3$pheno <- "variable"
+  
+  # bind these two data.frames together
+  df4 <- dplyr::bind_rows(df2, df3)
+  
   # reorder the columns and arrange
-  df2 <- 
-    df2 |>
-    dplyr::select(cv_abund, com, sp, abund, SLA, RGR) |>
-    dplyr::arrange(cv_abund, com, sp)
+  df4 <- 
+    df4 |>
+    dplyr::select(cv_abund, pheno, com, sp, abund, SLA, RGR, t0f) |>
+    dplyr::arrange(cv_abund, pheno, com, sp)
   
   # calculate the parameters that we will use later
-  df2$SANPP <- with(df2,
+  df4$SANPP <- with(df4,
                    (abund*(exp(RGR*(t0f)))) )
   
   # summarise to the community-level
   df.sum <- 
-    df2 |>
-    dplyr::group_by(cv_abund, com) |>
+    df4 |>
+    dplyr::group_by(cv_abund, pheno, com) |>
     dplyr::summarise(CWM_SLA = sum(abund*SLA),
                      FD_SLA = sum(abund*( (SLA-mean(SLA))^2 ) ),
                      SANPP = (log(sum(SANPP))/dt), .groups = "drop")
   
   # set-up a vector of groups to split by
-  groups <- with(df.sum, as.integer(factor(paste0(cv_abund))) )
+  groups <- with(df.sum, as.integer(factor(paste0(cv_abund, pheno))) )
   
   # split by group and then analyse using the linear models
   df.sum.list <- split(df.sum, groups)
@@ -123,6 +135,7 @@ for(j in 1:nrow(par.grid)) {
       r2_CWM_FD_SLA <- lm.x$r.squared
       
       df.out <- dplyr::tibble(cv_abund = df.x$cv_abund[1],
+                              pheno = df.x$pheno[1],
                               r_RGR_SLA = r,
                               r2_CWM_SLA = r2_CWM_SLA,
                               r2_FD_SLA = r2_FD_SLA,
@@ -147,7 +160,7 @@ head(sim.df)
 # plot these results
 
 # no variation in phenology among species
-ggplot(data = sim.df, 
+ggplot(data = sim.df |> dplyr::filter(pheno == "fixed"), 
        mapping = aes(x = r_RGR_SLA,
                      y = r2_CWM_FD_SLA)) +
   geom_jitter(width = 0.01, shape = 1, alpha = 0.6) +
@@ -157,12 +170,22 @@ ggplot(data = sim.df,
   scale_colour_viridis_d(option = "C", end = 0.9) +
   ylab("r2 SLA ~ ANPP") +
   xlab("r RGR ~ SLA") +
-  geom_hline(yintercept = max_r2, linetype = "dashed", colour = "red") +
   theme_classic() +
   theme(legend.position = "top")
   
 # variation in phenology among species (simulate this)
-  
+ggplot(data = sim.df |> dplyr::filter(pheno == "variable"), 
+       mapping = aes(x = r_RGR_SLA,
+                     y = r2_CWM_FD_SLA)) +
+  geom_jitter(width = 0.01, shape = 1, alpha = 0.6) +
+  geom_smooth(se = TRUE, alpha = 0.3, size = 0.5, method = "lm",
+              formula = y~poly(x, 2), show.legend = FALSE) +
+  facet_wrap(~cv_abund) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab("r2 SLA ~ ANPP") +
+  xlab("r RGR ~ SLA") +
+  theme_classic() +
+  theme(legend.position = "top")
 
 
 
