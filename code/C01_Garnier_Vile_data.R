@@ -7,16 +7,16 @@ library(dplyr)
 library(tidyr)
 
 # load the species RGR values from Vile et al. 2006
-vile_rgr <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_RGR.csv"))
+vile_rgr <- readr::read_csv("data/Vile_et_al_2006_Ecology_Letters_RGR.csv")
 head(vile_rgr)
 
 # fix the names
 vile_rgr <- 
-  vile_rgr %>%
-  mutate(Species = gsub(pattern = " ", replacement = "_", x = Species))
+  vile_rgr |>
+  dplyr::mutate(Species = gsub(pattern = " ", replacement = "_", x = Species))
 
 # load the relative abundance data
-vile_ra <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_RA.csv"))
+vile_ra <- readr::read_csv("data/Vile_et_al_2006_Ecology_Letters_RA.csv")
 head(vile_ra)
 
 # get the first 13 columns
@@ -24,102 +24,78 @@ vile_ra <- vile_ra[,1:13]
 
 # process the relative abundance data into a usable format i.e. site x sp
 vile_ra <- 
-  vile_ra %>%
-  mutate(Species = gsub(pattern = " ", replacement = "_", x = Species)) %>%
-  pivot_longer(cols = names(vile_ra)[-1],
-               names_to = "field_age",
-               values_to = "live_biomass") %>%
-  arrange(field_age, Species) %>%
-  mutate(field_age = substr(field_age, start = 1, stop = 2)) %>%
-  mutate(field_age = gsub(pattern = "\\.", replacement = "", x = field_age)) %>%
-  mutate(field_age = as.integer((field_age)))
+  vile_ra |>
+  dplyr::mutate(Species = gsub(pattern = " ", replacement = "_", x = Species)) |>
+  tidyr::pivot_longer(cols = names(vile_ra)[-1],
+                      names_to = "field_age",
+                      values_to = "live_biomass") |>
+  arrange(field_age, Species) |>
+  dplyr::mutate(field_age = substr(field_age, start = 1, stop = 2)) |>
+  dplyr::mutate(field_age = gsub(pattern = "\\.", replacement = "", x = field_age)) |>
+  dplyr::mutate(field_age = as.integer((field_age)))
   
 # add a plot id column
-vile_ra <- bind_cols(tibble(id = rep(1:12, each = length(unique(vile_rgr$Species))) ), 
-                     vile_ra)
+vile_ra <- dplyr::bind_cols(dplyr::tibble(id = rep(1:12, each = length(unique(vile_rgr$Species))) ), vile_ra)
 
 # check if these values are relative abundance
-vile_ra %>% 
-  group_by(id) %>%
-  summarise(sum_live_biomass = sum(live_biomass))
-
-# get the two most dominant species per plot id
-vile_ra <- 
-  vile_ra %>%
-  group_by(id) %>%
-  mutate(q12 = live_biomass[rank(live_biomass) == max(rank(live_biomass))],
-         q11 = live_biomass[rank(live_biomass) == (max(rank(live_biomass))-1) ]) %>%
-  filter(live_biomass == q12 | live_biomass == q11) %>%
-  ungroup() %>%
-  select(-q12, -q11) %>%
-  arrange(field_age, Species)
-
-# how many species are there?
-un_sp <- unique(vile_ra$Species)
-
-# fill in missing species
-vile_ra <- 
-  lapply(split(vile_ra, vile_ra$id), function(y) {
-  
-  df <- 
-    tibble(id = y$id[1],
-           Species = un_sp[!(un_sp %in% y$Species)],
-           field_age = y$field_age[1],
-           live_biomass = 0)
-  
-  df <- 
-    bind_rows(df, y) %>%
-    arrange(Species)
-  
-  return(df)
-  
-} )
-
-vile_ra <- bind_rows(vile_ra)
-
-# convert to relative biomass
-vile_ra <- 
-  vile_ra %>%
-  group_by(id) %>%
-  mutate(sum_biomass = sum(live_biomass)) %>%
-  ungroup() %>%
-  mutate(live_biomass = live_biomass/sum_biomass) %>%
-  select(-sum_biomass)
-
-# load the SANPP data
-vile_SANPP <- read_csv(here("data/Vile_et_al_2006_Ecology_Letters_SANPP.csv"))
-head(vile_SANPP)
-
-# add a plot id column
-vile_SANPP <- bind_cols(tibble(id = 1:nrow(vile_SANPP)), vile_SANPP)
-head(vile_SANPP)
+vile_ra |>
+  dplyr::group_by(field_age, id) |>
+  dplyr::summarise(sum_live_biomass = sum(live_biomass))
 
 # join these data
 vile_dat <- 
-  left_join(vile_ra, 
-             select(vile_rgr, Species, RGRmax), 
-             by = "Species"
-             )
+  dplyr::full_join(vile_ra, 
+                   dplyr::select(vile_rgr, Species, RGRmax), 
+                   by = "Species")
 
-vile_dat <- full_join(vile_dat, vile_SANPP, by = "id")
+# load the trait data
+trait_dat <- readRDS("data/TRY_species_traits.rds")
 
-# can we get realistic SANPP data from the RGR values?
-vile_dat %>%
-  group_by(id) %>%
-  summarise(SANPP_est = log10(sum( live_biomass*exp(RGRmax*6) ))/90,
-            SANPP = median(SANPP)/1000)
+# get SLA from this data
+trait_dat <- 
+  trait_dat |>
+  dplyr::filter(Trait == "SLA") |>
+  dplyr::select(AccSpeciesName, Trait_m) |>
+  dplyr::rename(Species = AccSpeciesName, SLA = Trait_m) |>
+  dplyr::mutate(Species = gsub(pattern = " ", "_", Species))
+head(trait_dat)
+range(trait_dat$SLA)
 
-# make a list to fit the productivity model
-d <- 
-  list(S = as.integer(as.factor(vile_dat$Species)),
-       RGR = vile_dat$RGRmax,
-       pi = vile_dat$live_biomass,
-       NPP = vile_dat$SANPP/1000)
+# check if all the species are present
+vile_dat$Species[which( !(unique(vile_dat$Species) %in% trait_dat$Species) )]
 
-# write this as a proper stan model...
+# add the SLA data to the RGR and RA data
+vile_dat <- dplyr::left_join(vile_dat, trait_dat, by = "Species")
 
-# useful looking thread: 
-# https://discourse.mc-stan.org/t/finite-mixture-model-where-the-sum-of-a-groups-characteristics-is-known/20146
-# https://discourse.mc-stan.org/t/sum-vector-by-groups-month-year/5588/5
+# export these data
+saveRDS(vile_dat, file = "data/vile-rgr-sla-data.rds")
 
+# get the correct labels for the fields
+ids <- 
+  vile_dat |>
+  dplyr::select(id, field_age) |>
+  dplyr::distinct()
 
+# load the SANPP data
+vile_SANPP <- readr::read_csv("data/Garnier_2004_Ecology_ecosystem_properties.csv")
+head(vile_SANPP)
+
+# convert field age to a factor
+vile_SANPP$Field_age <- factor(vile_SANPP$Field_age, levels = unique(ids$field_age) )
+vile_SANPP <-
+  vile_SANPP |>
+  dplyr::arrange(Field_age)
+
+# add the field ids
+vile_SANPP$id <- ids$id
+
+# reorder the columns
+vile_SANPP <-
+  vile_SANPP |>
+  dplyr::select(id, field_age = Field_age, BIOmax, ANPP, SANPP) |>
+  dplyr::mutate(field_age = as.integer(field_age))
+
+# export as a .rds file
+saveRDS(vile_SANPP, file = "data/vile-sanpp-data.rds")
+
+### END

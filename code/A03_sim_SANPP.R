@@ -4,6 +4,7 @@
 # load relevant functions
 source("code/A01_sim_abun_func.R")
 source("code/A02_sim_traits_func.R")
+source("code/helper-plotting-theme.R")
 
 # load relevant libraries
 library(dplyr)
@@ -168,9 +169,9 @@ ggplot(data = sim.df |> dplyr::filter(pheno == "fixed"),
               formula = y~poly(x, 2), show.legend = FALSE) +
   facet_wrap(~cv_abund) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab("r2 SLA ~ ANPP") +
+  ylab("r2 SLA ~ SANPP") +
   xlab("r RGR ~ SLA") +
-  theme_classic() +
+  theme_meta() +
   theme(legend.position = "top")
   
 # variation in phenology among species (simulate this)
@@ -182,9 +183,9 @@ ggplot(data = sim.df |> dplyr::filter(pheno == "variable"),
               formula = y~poly(x, 2), show.legend = FALSE) +
   facet_wrap(~cv_abund) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab("r2 SLA ~ ANPP") +
+  ylab("r2 SLA ~ SANPP") +
   xlab("r RGR ~ SLA") +
-  theme_classic() +
+  theme_meta() +
   theme(legend.position = "top")
 
 
