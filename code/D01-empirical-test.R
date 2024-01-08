@@ -133,6 +133,7 @@ p3 <-
   theme(legend.position = "none") +
   theme_transparent()
 plot(p3)
+plot(p3)
 
 # export the figure for further modification
 ggsave(filename = "figures-tables/fig8.pdf", p3,
