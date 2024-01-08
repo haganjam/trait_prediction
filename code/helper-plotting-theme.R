@@ -45,5 +45,36 @@ theme_meta <- function(base_size = 12, base_family = "") {
     legend.text = element_text(colour = "black", size = 10, face = "plain"),
     legend.title = element_text(colour = "black", size = 10, face = "plain")
   )
-} 
+}
+
+#' @title theme_transparent
+#' @description A customised plotting theme to make the plots transparent
+#' for use in presentations.
+#' @author James G. Hagan (james_hagan(at)outlook.com)
+
+theme_transparent <- function() {
+  
+  theme(
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+    panel.grid.major = element_blank(), #remove major gridlines
+    panel.grid.minor = element_blank(), #remove minor gridlines
+    legend.background = element_rect(fill='transparent'), #transparent legend bg
+    legend.box.background = element_rect(fill='transparent') #transparent legend panel
+  )
+  
+  }
+
+# model fit statistics
+lm_eqn <- function(m){
+  eq <- substitute(italic(r)^2~"="~r2,
+                   list(r2 = format(summary(m)$r.squared, digits = 2)))
+  as.character(as.expression(eq))
+}
+
+
+
+
+
+
 
