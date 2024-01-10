@@ -14,7 +14,7 @@ library(ggplot2)
 df.traits <- 
   sim_traits(sp = 5, com = 100,
              t1 = "SLA", t2 = "RGR", 
-             mu_t1 = 100, mu_t2 = 5, sd_t1 = 5, sd_t2 = 2.5, r = 0.5,
+             mu_t1 = 100, mu_t2 = 5, sd_t1 = 5, sd_t2 = 2.5, r = 0.75,
              Eind_t1 = 2.5, Eind_t2 = 0.5,
              t2_scale = 10)
 
@@ -24,13 +24,13 @@ df.traits <- dplyr::bind_rows(df.traits)
 # plot the traits
 p1 <- 
   ggplot(data = df.traits) +
-  geom_point(mapping = aes(x = RGR, y = SLA, colour = sp), alpha = 0.5) +
-  geom_density_2d(mapping = aes(x = RGR, y = SLA, colour = sp), alpha = 0.5, n = 100) +
+  geom_point(mapping = aes(x = SLA, y = RGR, colour = sp), alpha = 0.5) +
+  geom_density_2d(mapping = aes(x = SLA, y = RGR, colour = sp), alpha = 0.5, n = 100) +
   scale_colour_viridis_d() +
-  ylab("Specific Leaf Area (SLA, cm g-1)") +
-  xlab("Relative growth rate (g g-1 day-1)") +
-  scale_x_continuous(limits = c(-0.1, 1.05)) +
-  scale_y_continuous(limits = c(87, 115)) +
+  xlab("Specific Leaf Area (SLA, cm g-1)") +
+  ylab("Relative growth rate (g g-1 day-1)") +
+  scale_y_continuous(limits = c(-0.1, 1.05)) +
+  scale_x_continuous(limits = c(87, 115)) +
   theme_meta() +
   theme(legend.position = "none") +
   theme_transparent()
@@ -42,17 +42,17 @@ ggsave(filename = "figures-tables/fig1.pdf", p1,
 
 p2 <- 
   ggplot(data = df.traits) +
-  geom_point(mapping = aes(x = RGR, y = SLA, colour = sp), alpha = 0.5) +
-  geom_density_2d(mapping = aes(x = RGR, y = SLA, colour = sp), alpha = 0.5, n = 100) +
-  stat_ellipse(mapping = aes(x = RGR, y = SLA), linetype = "dashed") +
+  geom_point(mapping = aes(x = SLA, y = RGR, colour = sp), alpha = 0.5) +
+  geom_density_2d(mapping = aes(x = SLA, y = RGR, colour = sp), alpha = 0.5, n = 100) +
+  stat_ellipse(mapping = aes(x = SLA, y = RGR), linetype = "dashed") +
   scale_colour_viridis_d() +
   annotate(geom = "text", 
-           label = "r = 0.5",
+           label = "r = 0.7",
            x = -Inf, y = Inf, vjust = 2, hjust = -0.6, size = 5) +
-  ylab("Specific Leaf Area (SLA, cm g-1)") +
-  xlab("Relative growth rate (g g-1 day-1)") +
-  scale_x_continuous(limits = c(-0.1, 1.05)) +
-  scale_y_continuous(limits = c(87, 115)) +
+  xlab("Specific Leaf Area (SLA, cm g-1)") +
+  ylab("Relative growth rate (g g-1 day-1)") +
+  scale_y_continuous(limits = c(-0.1, 1.05)) +
+  scale_x_continuous(limits = c(87, 115)) +
   theme_meta() +
   theme(legend.position = "none") +
   theme_transparent()
@@ -125,14 +125,14 @@ ggsave(filename = "figures-tables/fig4.pdf", p4,
 
 # get traits from the sim_traits() function
 df.traits <- 
-  sim_traits(sp = sp, com = com,
+  sim_traits(sp = 5, com = 100,
              t1 = "SLA", t2 = "RGR", 
-             mu_t1 = 100, mu_t2 = 3, sd_t1 = 30, sd_t2 = 2.5, r = r,
+             mu_t1 = 100, mu_t2 = 3, sd_t1 = 30, sd_t2 = 2.5, r = 0.7,
              Eind_t1 = 1, Eind_t2 = 0.15,
              t2_scale = 100)
 
 # simulate different communities from a log-normal distribution
-df.1 <- sim_abund(sp = sp, com = com, N = N, cv_abund = 0.5)
+df.1 <- sim_abund(sp = 5, com = 100, N = 100, cv_abund = 0.5)
 
 # bind into a data.frame
 df.1 <- dplyr::bind_rows(df.1)
@@ -141,41 +141,49 @@ df.1 <- dplyr::bind_rows(df.1)
 df.1$cv_abund <- 0.5
 
 # arrange this data.frame
-df1 <- 
-  df1 |>
+df.1 <- 
+  df.1 |>
   dplyr::arrange(cv_abund, com, sp)
 
 # bind the trait data to df2
-df2 <- dplyr::full_join(df1, dplyr::bind_rows(df.traits), by = c("com", "sp"))
+df.2 <- dplyr::full_join(df.1, dplyr::bind_rows(df.traits), by = c("com", "sp"))
 
 # add the phenology to this data.frame
-df2$t0f <- t0f
-df2$pheno <- "fixed"
+df.2$t0f <- 30
+df.2$pheno <- "fixed"
 
 # calculate the parameters that we will use later
-df2$SANPP <- with(df2,
+df.2$SANPP <- with(df.2,
                   (abund*(exp(RGR*(t0f)))) )
 
 # summarise to the community-level
 df.sum <- 
-  df2 |>
+  df.2 |>
   dplyr::group_by(cv_abund, pheno, com) |>
   dplyr::summarise(CWM_SLA = sum(abund*SLA),
                    FD_SLA = sum(abund*( (SLA-mean(SLA))^2 ) ),
-                   SANPP = (log(sum(SANPP))/dt), .groups = "drop")
+                   SANPP = (log(sum(SANPP))/30), .groups = "drop")
 head(df.sum)
 
 # plot
 p5 <- 
   ggplot(data = df.sum) +
   geom_point(mapping = aes(x = CWM_SLA, y = SANPP), alpha = 0.75, size = 2.5) +
+  geom_smooth(mapping = aes(x = CWM_SLA, y = SANPP), alpha = 0.2, linewidth = 0.5, colour = "black",
+              method = "lm") +
   scale_colour_viridis_d() +
   xlab("CWM SLA (cm g-1)") +
   ylab("SANPP (g kg-1 day-1)") +
+  annotate(geom = "text", 
+           label = lm_eqn(lm1),
+           x = -Inf, y = Inf, vjust = 1.5, hjust = -0.5, size = 4.5, parse = TRUE) +
   theme_meta() +
   theme(legend.position = "none") +
   theme_transparent()
 plot(p5)
+
+lm1 <- lm(SANPP~CWM_SLA, data = df.sum)
+summary(lm1)
 
 # export the figure for further modification
 ggsave(filename = "figures-tables/fig5.pdf", p5,

@@ -24,20 +24,21 @@ p1 <-
   ggplot(data = SLA_RGR,
        mapping = aes(x = SLA, y = RGRmax)) +
   geom_point(size = 2.5, alpha = 0.75) +
+  geom_smooth(method = "lm", size = 0.5, alpha = 0.2, colour = "black") +
   ylab("RGR max (g g-1 day-1)") +
   xlab("Specific leaf area (SLA, cm g-1)") +
   annotate(geom = "text", 
            label = paste0("r = ", round(cor_test$estimate, 2), " ; ",
                           "P = ", round(cor_test$p.value, 2)),
            x = Inf, y = -Inf, vjust = -1, hjust = 1.1, size = 4) +
-  scale_y_continuous(limits = c(0.16, 0.34)) +
+  scale_y_continuous(limits = c(0.14, 0.37)) +
   theme_meta() +
   theme_transparent()
 plot(p1)
 
 # export the figure for further modification
 ggsave(filename = "figures-tables/fig6.pdf", p1,
-       unit = "cm", width = 10, height = 8, bg = "transparent")
+       unit = "cm", width = 12, height = 10, bg = "transparent")
 
 # calculate relative abundance
 trait_dat <- 
@@ -112,7 +113,7 @@ plot(p2)
 
 # export the figure for further modification
 ggsave(filename = "figures-tables/fig7.pdf", p2,
-       unit = "cm", width = 12, height = 10, bg = "transparent")
+       unit = "cm", width = 10, height = 10, bg = "transparent")
 
 # these two models as a comparison
 p3 <- 
@@ -137,7 +138,7 @@ plot(p3)
 
 # export the figure for further modification
 ggsave(filename = "figures-tables/fig8.pdf", p3,
-       unit = "cm", width = 12, height = 10, bg = "transparent")
+       unit = "cm", width = 10, height = 10, bg = "transparent")
 
 
 

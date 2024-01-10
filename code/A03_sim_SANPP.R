@@ -161,7 +161,8 @@ head(sim.df)
 # plot these results
 
 # no variation in phenology among species
-ggplot(data = sim.df |> dplyr::filter(cv_abund == 0.5, pheno == "fixed"), 
+p1 <- 
+  ggplot(data = sim.df |> dplyr::filter(pheno == "fixed"), 
        mapping = aes(x = r_RGR_SLA,
                      y = r2_CWM_SLA)) +
   geom_smooth(se = TRUE, alpha = 0.2, size = 0.5, method = "lm",
@@ -174,10 +175,16 @@ ggplot(data = sim.df |> dplyr::filter(cv_abund == 0.5, pheno == "fixed"),
   xlab("Pearson's r [ RGR ~ SLA ]") +
   theme_meta() +
   theme(legend.position = "top")
+plot(p1)
 
-ggplot(data = sim.df |> dplyr::filter(cv_abund == 20, pheno == "fixed"), 
+# export the figure for further modification
+ggsave(filename = "figures-tables/fig9.pdf", p1,
+       unit = "cm", width = 12, height = 10, bg = "transparent")
+
+p2 <- 
+  ggplot(data = sim.df |> dplyr::filter(pheno == "fixed"), 
        mapping = aes(x = r_RGR_SLA,
-                     y = r2_CWM_SLA)) +
+                     y = r2_CWM_FD_SLA)) +
   geom_smooth(se = TRUE, alpha = 0.2, size = 0.5, method = "lm",
               formula = y~poly(x, 2), fill = "darkblue", colour = "darkblue", show.legend = FALSE) +
   geom_jitter(width = 0.01, shape = 1, alpha = 0.6, size = 2.5, colour = "darkblue") +
@@ -188,7 +195,11 @@ ggplot(data = sim.df |> dplyr::filter(cv_abund == 20, pheno == "fixed"),
   xlab("Pearson's r [ RGR ~ SLA ]") +
   theme_meta() +
   theme(legend.position = "top")
-  
+plot(p2) 
+
+# export the figure for further modification
+ggsave(filename = "figures-tables/fig10.pdf", p2,
+       unit = "cm", width = 12, height = 10, bg = "transparent")
 
 # variation in phenology among species (simulate this)
 ggplot(data = sim.df |> dplyr::filter(pheno == "variable"), 
